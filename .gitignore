@@ -1,0 +1,13 @@
+vendor/
+.env
+writable/cache/*
+writable/logs/*
+writable/session/*
+writable/uploads/*
+public/uploads/products/*
+!writable/cache/.gitkeep
+!writable/logs/.gitkeep
+!writable/session/.gitkeep
+!writable/uploads/.gitkeep
+!public/uploads/products/.gitkeep
+!public/uploads/products/default-product.svg
