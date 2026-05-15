@@ -2,16 +2,26 @@
 
 namespace App\Controllers;
 
+use App\Libraries\CartService;
 use App\Models\ProductModel;
 
 class CartController extends BaseController
 {
+    protected CartService $cart;
+
+    public function __construct()
+    {
+        $this->cart = new CartService();
+    }
+
     public function index()
     {
+        $items = $this->cart->items();
+
         return view('cart/index', [
             'title' => 'Cart',
-            'items' => $this->cartItems(),
-            'total' => $this->cartTotal(),
+            'items' => $items,
+            'total' => $this->cart->total($items),
         ]);
     }
 
@@ -21,7 +31,7 @@ class CartController extends BaseController
 
         if (! $product || (int) $product['stock'] < 1) {
             if ($this->request->isAJAX()) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Product unavailable.']);
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Product unavailable.', 'csrfName' => csrf_token(), 'csrfToken' => csrf_hash()]);
             }
             return redirect()->back()->with('error', 'Product unavailable.');
         }
@@ -36,13 +46,14 @@ class CartController extends BaseController
                 'status' => 'success',
                 'message' => 'Added to selection.',
                 'cartCount' => array_sum($cart),
-                'html' => view('partials/offcanvas_cart')
+                'html' => view('partials/offcanvas_cart', ['cartData' => (new CartService())->items()]),
+                'csrfName' => csrf_token(),
+                'csrfToken' => csrf_hash(),
             ]);
         }
 
         return redirect()->back()->with('success', 'Added to cart.');
     }
-
 
     public function update()
     {
@@ -75,7 +86,9 @@ class CartController extends BaseController
                 'status' => 'success',
                 'message' => 'Removed from selection.',
                 'cartCount' => array_sum($cart),
-                'html' => view('partials/offcanvas_cart')
+                'html' => view('partials/offcanvas_cart', ['cartData' => (new CartService())->items()]),
+                'csrfName' => csrf_token(),
+                'csrfToken' => csrf_hash(),
             ]);
         }
 
@@ -87,36 +100,5 @@ class CartController extends BaseController
         session()->remove('cart');
 
         return redirect()->to('/cart')->with('success', 'Cart cleared.');
-    }
-
-    protected function cartItems(): array
-    {
-        $cart = session('cart') ?? [];
-        if ($cart === []) {
-            return [];
-        }
-
-        $products = (new ProductModel())->whereIn('id', array_keys($cart))->findAll();
-        $items = [];
-
-        foreach ($products as $product) {
-            $qty = (int) ($cart[$product['id']] ?? 0);
-            if ($qty < 1) {
-                continue;
-            }
-
-            $items[] = [
-                'product' => $product,
-                'qty' => $qty,
-                'subtotal' => $qty * (float) $product['price'],
-            ];
-        }
-
-        return $items;
-    }
-
-    protected function cartTotal(): float
-    {
-        return array_sum(array_column($this->cartItems(), 'subtotal'));
     }
 }

@@ -15,9 +15,9 @@ $routes->setAutoRoute(false);
 $routes->get('/', 'HomeController::index');
 
 $routes->get('register', 'AuthController::registerForm');
-$routes->post('register', 'AuthController::register');
+$routes->post('register', 'AuthController::register', ['filter' => 'throttle']);
 $routes->get('login', 'AuthController::loginForm');
-$routes->post('login', 'AuthController::login');
+$routes->post('login', 'AuthController::login', ['filter' => 'throttle']);
 $routes->post('logout', 'AuthController::logout');
 
 $routes->get('products', 'ProductController::index');

@@ -49,7 +49,7 @@
                     <h5 class="text-uppercase text-muted mb-4" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em;">Account</h5>
                     <ul class="list-unstyled">
                         <?php if (session('is_logged_in')): ?>
-                            <li class="mb-2"><span class="text-dark opacity-50 fw-bold small text-uppercase"><?= session('email') ?></span></li>
+                            <li class="mb-2"><span class="text-dark opacity-50 fw-bold small text-uppercase"><?= esc(session('user_email')) ?></span></li>
                             <?php if (session('role') === 'admin'): ?>
                                 <li class="mb-3"><a href="<?= base_url('/admin/products') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Admin Portal</a></li>
                             <?php endif; ?>
@@ -69,7 +69,7 @@
     </div>
 </nav>
 
-<?= view('partials/offcanvas_cart') ?>
+<?= view('partials/offcanvas_cart', ['cartData' => (new \App\Libraries\CartService())->items()]) ?>
 
 <style>
 .vp-nav {

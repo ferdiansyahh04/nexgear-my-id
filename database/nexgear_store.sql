@@ -9,8 +9,10 @@ DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS cart;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS ci_sessions;
 SET FOREIGN_KEY_CHECKS = 1;
 
+-- ── Users ───────────────────────────────────────────────
 CREATE TABLE users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
@@ -21,6 +23,7 @@ CREATE TABLE users (
   updated_at DATETIME NULL
 ) ENGINE=InnoDB;
 
+-- ── Products ────────────────────────────────────────────
 CREATE TABLE products (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(160) NOT NULL,
@@ -28,17 +31,25 @@ CREATE TABLE products (
   price DECIMAL(12, 2) NOT NULL DEFAULT 0,
   stock INT UNSIGNED NOT NULL DEFAULT 0,
   image VARCHAR(255) NOT NULL DEFAULT 'default-product.svg',
+  image_secondary VARCHAR(255) NULL,
   created_at DATETIME NULL,
   updated_at DATETIME NULL,
   INDEX idx_products_name (name),
-  INDEX idx_products_price (price)
+  INDEX idx_products_price (price),
+  FULLTEXT INDEX ft_products_search (name, description)
 ) ENGINE=InnoDB;
 
+-- ── Cart (Orders) ───────────────────────────────────────
 CREATE TABLE cart (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   status ENUM('active', 'checked_out', 'cancelled') NOT NULL DEFAULT 'active',
   total DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  shipping_name VARCHAR(120) NULL,
+  shipping_phone VARCHAR(20) NULL,
+  shipping_address VARCHAR(500) NULL,
+  shipping_city VARCHAR(100) NULL,
+  shipping_postal_code VARCHAR(10) NULL,
   created_at DATETIME NULL,
   updated_at DATETIME NULL,
   CONSTRAINT fk_cart_user
@@ -48,6 +59,7 @@ CREATE TABLE cart (
   INDEX idx_cart_user_status (user_id, status)
 ) ENGINE=InnoDB;
 
+-- ── Cart Items ──────────────────────────────────────────
 CREATE TABLE cart_items (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   cart_id INT UNSIGNED NOT NULL,
@@ -68,6 +80,17 @@ CREATE TABLE cart_items (
   INDEX idx_cart_items_product (product_id)
 ) ENGINE=InnoDB;
 
+-- ── Sessions (for DatabaseHandler in production) ────────
+CREATE TABLE ci_sessions (
+  id VARCHAR(128) NOT NULL,
+  ip_address VARCHAR(45) NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  data BLOB NOT NULL,
+  PRIMARY KEY (id),
+  INDEX ci_sessions_timestamp (timestamp)
+) ENGINE=InnoDB;
+
+-- ── Seed Data ───────────────────────────────────────────
 INSERT INTO users (name, email, password, role, created_at, updated_at) VALUES
 ('Admin NexGear', 'admin@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'admin', NOW(), NOW()),
 ('Demo User', 'user@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'user', NOW(), NOW());

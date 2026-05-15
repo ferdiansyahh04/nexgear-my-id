@@ -12,17 +12,34 @@ class ProductController extends BaseController
         $model = new ProductModel();
 
         if ($q !== '') {
-            $model->groupStart()
-                ->like('name', $q)
-                ->orLike('description', $q)
-                ->groupEnd();
+            if (strlen($q) >= 3) {
+                // Use FULLTEXT search for better performance (requires ft_products_search index)
+                $escaped = $model->db->escape($q);
+                $model->where("MATCH(name, description) AGAINST({$escaped} IN BOOLEAN MODE)", null, false);
+            } else {
+                // Fallback to LIKE for very short queries (below MySQL ft_min_word_len)
+                $model->groupStart()
+                    ->like('name', $q)
+                    ->orLike('description', $q)
+                    ->groupEnd();
+            }
         }
 
-        return view('products/index', [
+        $products = $model->orderBy('created_at', 'DESC')->paginate(12);
+
+        $response = view('products/index', [
             'title'    => 'Elite Collection',
-            'products' => $model->orderBy('created_at', 'DESC')->findAll(),
+            'products' => $products,
+            'pager'    => $model->pager,
             'q'        => $q,
         ]);
+
+        // Cache non-search listing pages for 5 minutes
+        if ($q === '' && ENVIRONMENT === 'production') {
+            $this->cachePage(300);
+        }
+
+        return $response;
     }
 
     public function show(int $id)
@@ -31,6 +48,11 @@ class ProductController extends BaseController
 
         if (! $product) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Product not found');
+        }
+
+        // Cache product detail pages for 10 minutes
+        if (ENVIRONMENT === 'production') {
+            $this->cachePage(600);
         }
 
         return view('products/show', [

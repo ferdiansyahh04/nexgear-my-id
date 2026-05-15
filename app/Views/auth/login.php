@@ -30,6 +30,7 @@
             New to NexGear? <a class="link-accent" href="<?= base_url('/register') ?>">Create an account</a>
         </p>
 
+        <?php if (ENVIRONMENT !== 'production'): ?>
         <div class="demo-info">
             <p class="small text-secondary mb-2 fw-bold"><i class="bi bi-info-circle me-1"></i> Demo Accounts:</p>
             <div class="d-flex flex-column gap-1 small">
@@ -37,6 +38,7 @@
                 <code class="text-primary-light">User: user@nexgear.test / password</code>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </section>
 <?= $this->endSection() ?>

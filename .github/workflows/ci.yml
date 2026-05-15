@@ -1,0 +1,84 @@
+name: NexGear CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: nexgear_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, mysqli, pdo_mysql
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          sed -i 's/CI_ENVIRONMENT = development/CI_ENVIRONMENT = testing/' .env
+          sed -i 's/database.default.database = nexgear_store/database.default.database = nexgear_test/' .env
+          sed -i 's/database.default.password =/database.default.password = root/' .env
+
+      - name: Import database schema
+        run: mysql -h 127.0.0.1 -u root -proot nexgear_test < database/nexgear_store.sql
+
+      - name: Run PHPUnit tests
+        run: vendor/bin/phpunit --testdox
+
+  deploy:
+    name: Deploy to VPS
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/nexgear-store
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            php spark migrate
+            php spark cache:clear
+            sudo systemctl reload php8.1-fpm

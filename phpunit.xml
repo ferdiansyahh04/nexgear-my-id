@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+         backupGlobals="false"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         colors="true"
+         columns="max"
+         failOnRisky="true"
+         failOnWarning="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <server name="app.baseURL" value="http://localhost:8080/"/>
+        <const name="HOMEPATH" value="./"/>
+        <const name="CONFIGPATH" value="./app/Config/"/>
+        <const name="PUBLICPATH" value="./public/"/>
+        <env name="CI_ENVIRONMENT" value="testing"/>
+        <env name="database.tests.DBDriver" value="MySQLi"/>
+        <env name="database.tests.database" value="nexgear_test"/>
+    </php>
+</phpunit>

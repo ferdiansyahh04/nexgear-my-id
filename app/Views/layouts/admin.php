@@ -46,10 +46,10 @@
             <div class="p-4 border-top border-dark mt-auto bg-light">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <div class="bg-dark text-white font-serif rounded-0 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-size: 1.1rem; font-style: italic;">
-                        <?= substr(session('email'), 0, 1) ?>
+                        <?= esc(substr(session('user_email') ?? '', 0, 1)) ?>
                     </div>
                     <div class="overflow-hidden">
-                        <div class="text-dark small fw-bold text-truncate" style="font-family: 'Space Grotesk', sans-serif;"><?= esc(session('email')) ?></div>
+                        <div class="text-dark small fw-bold text-truncate" style="font-family: 'Space Grotesk', sans-serif;"><?= esc(session('user_email')) ?></div>
                         <div class="text-muted font-serif italic" style="font-size: 0.7rem;">Curator</div>
                     </div>
                 </div>

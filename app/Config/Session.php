@@ -4,6 +4,7 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Session\Handlers\BaseHandler;
+use CodeIgniter\Session\Handlers\DatabaseHandler;
 use CodeIgniter\Session\Handlers\FileHandler;
 
 class Session extends BaseConfig
@@ -14,11 +15,11 @@ class Session extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * The session storage driver to use:
-     * - `CodeIgniter\Session\Handlers\ArrayHandler` (for testing)
-     * - `CodeIgniter\Session\Handlers\FileHandler`
-     * - `CodeIgniter\Session\Handlers\DatabaseHandler`
-     * - `CodeIgniter\Session\Handlers\MemcachedHandler`
-     * - `CodeIgniter\Session\Handlers\RedisHandler`
+     * - `CodeIgniter\Session\Handlers\FileHandler`      (development)
+     * - `CodeIgniter\Session\Handlers\DatabaseHandler`   (production — scalable)
+     * - `CodeIgniter\Session\Handlers\RedisHandler`      (high-traffic)
+     *
+     * Automatically uses DatabaseHandler in production for multi-server support.
      *
      * @var class-string<BaseHandler>
      */
@@ -48,17 +49,21 @@ class Session extends BaseConfig
      * Session Save Path
      * --------------------------------------------------------------------------
      *
-     * The location to save sessions to and is driver dependent.
-     *
-     * For the 'files' driver, it's a path to a writable directory.
-     * WARNING: Only absolute paths are supported!
-     *
-     * For the 'database' driver, it's a table name.
-     * Please read up the manual for the format with other session drivers.
-     *
-     * IMPORTANT: You are REQUIRED to set a valid save path!
+     * For FileHandler: absolute path to a writable directory.
+     * For DatabaseHandler: the database table name (e.g. 'ci_sessions').
      */
     public string $savePath = WRITEPATH . 'session';
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Use database sessions in production for multi-server scalability
+        if (ENVIRONMENT === 'production') {
+            $this->driver   = DatabaseHandler::class;
+            $this->savePath = 'ci_sessions';
+        }
+    }
 
     /**
      * --------------------------------------------------------------------------

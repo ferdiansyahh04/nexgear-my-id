@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\AdminFilter;
 use App\Filters\AuthFilter;
+use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
 use CodeIgniter\Filters\Honeypot;
@@ -19,6 +20,7 @@ class Filters extends BaseConfig
         'secureheaders' => SecureHeaders::class,
         'auth'          => AuthFilter::class,
         'admin'         => AdminFilter::class,
+        'throttle'      => ThrottleFilter::class,
     ];
 
     public array $globals = [

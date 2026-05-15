@@ -16,6 +16,18 @@ class App extends BaseConfig
     public string $appTimezone = 'Asia/Jakarta';
     public string $charset = 'UTF-8';
     public bool $forceGlobalSecureRequests = false;
+
     public array $proxyIPs = [];
     public bool $CSPEnabled = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Force HTTPS in production
+        if (ENVIRONMENT === 'production') {
+            $this->forceGlobalSecureRequests = true;
+            $this->CSPEnabled = true;
+        }
+    }
 }

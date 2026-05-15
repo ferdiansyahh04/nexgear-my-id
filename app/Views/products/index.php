@@ -7,7 +7,7 @@
         <div class="d-flex justify-content-between align-items-center py-3 px-4 px-lg-5">
             <h1 class="h6 mb-0 text-uppercase fw-bold" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em;">All Objects</h1>
             <div class="d-flex align-items-center gap-4">
-                <span class="small text-muted font-serif italic"><?= count($products) ?> items</span>
+                <span class="small text-muted font-serif italic"><?= $pager->getTotal() ?> items</span>
                 <button class="btn btn-link text-dark text-decoration-none p-0 small text-uppercase fw-bold d-none d-lg-block" style="font-size: 0.65rem; letter-spacing: 0.1em;">Filter + Sort</button>
             </div>
         </div>
@@ -31,9 +31,10 @@
     </div>
 </section>
 
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-    AOS.init({ duration: 800, once: true });
-</script>
+<?php if ($pager->getPageCount() > 1): ?>
+<div class="container-fluid px-4 px-lg-5 py-4 d-flex justify-content-center">
+    <?= $pager->links('default', 'default_full') ?>
+</div>
+<?php endif; ?>
+
 <?= $this->endSection() ?>

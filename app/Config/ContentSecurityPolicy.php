@@ -40,7 +40,7 @@ class ContentSecurityPolicy extends BaseConfig
      * HTTP to HTTPS. This directive is for websites with
      * large numbers of old URLs that need to be rewritten.
      */
-    public bool $upgradeInsecureRequests = false;
+    public bool $upgradeInsecureRequests = true;
 
     // -------------------------------------------------------------------------
     // CSP DIRECTIVES SETTINGS
@@ -59,14 +59,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $scriptSrc = 'self';
+    public $scriptSrc = ['self', 'cdn.jsdelivr.net', 'unpkg.com'];
 
     /**
      * Specifies valid sources for JavaScript <script> elements.
      *
      * @var list<string>|string
      */
-    public array|string $scriptSrcElem = 'self';
+    public array|string $scriptSrcElem = ['self', 'cdn.jsdelivr.net', 'unpkg.com'];
 
     /**
      * Specifies valid sources for JavaScript inline event
@@ -81,14 +81,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $styleSrc = 'self';
+    public $styleSrc = ['self', 'unsafe-inline', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'unpkg.com'];
 
     /**
      * Specifies valid sources for stylesheets <link> elements.
      *
      * @var list<string>|string
      */
-    public array|string $styleSrcElem = 'self';
+    public array|string $styleSrcElem = ['self', 'unsafe-inline', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'unpkg.com'];
 
     /**
      * Specifies valid sources for stylesheets inline
@@ -103,7 +103,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $imageSrc = 'self';
+    public $imageSrc = ['self', 'data:', 'images.unsplash.com'];
 
     /**
      * Restricts the URLs that can appear in a page's `<base>` element.
@@ -127,14 +127,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $connectSrc = 'self';
+    public $connectSrc = ['self', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
     /**
      * Specifies the origins that can serve web fonts.
      *
      * @var list<string>|string
      */
-    public $fontSrc;
+    public $fontSrc = ['self', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
 
     /**
      * Lists valid endpoints for submission from `<form>` tags.

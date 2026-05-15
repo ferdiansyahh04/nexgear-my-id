@@ -3,6 +3,30 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Helper: Get current CSRF token name and value from meta tag
+    function getCsrf() {
+        const meta = document.getElementById('csrf-token');
+        return {
+            name: meta ? meta.getAttribute('name') : '',
+            hash: meta ? meta.content : ''
+        };
+    }
+
+    // Helper: Update CSRF token after a successful AJAX response
+    function refreshCsrf(data) {
+        const meta = document.getElementById('csrf-token');
+        if (meta && data.csrfToken) {
+            meta.content = data.csrfToken;
+        }
+        // Also update all hidden CSRF inputs in forms
+        if (data.csrfName && data.csrfToken) {
+            document.querySelectorAll(`input[name="${data.csrfName}"]`).forEach(input => {
+                input.value = data.csrfToken;
+            });
+        }
+    }
+
     // 1. AJAX Add to Bag
     const cartForms = document.querySelectorAll('.ajax-add-to-cart');
     cartForms.forEach(form => {
@@ -20,19 +44,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const formData = new FormData(this);
-                const csrfMeta = document.getElementById('csrf-token');
-                const csrfToken = csrfMeta ? csrfMeta.content : '';
+                const csrf = getCsrf();
                 
                 const response = await fetch(url, {
                     method: 'POST',
                     body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrf.hash
                     }
                 });
                 
                 const data = await response.json();
+                refreshCsrf(data);
                 
                 if (data.status === 'success') {
                     // Start Flying Animation
@@ -92,18 +116,18 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('disabled');
             
             try {
-                const csrfMeta = document.getElementById('csrf-token');
-                const csrfToken = csrfMeta ? csrfMeta.content : '';
+                const csrf = getCsrf();
 
                 const response = await fetch(`${window.location.origin}/cart/remove/${productId}`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrf.hash
                     }
                 });
                 
                 const data = await response.json();
+                refreshCsrf(data);
                 
                 if (data.status === 'success') {
                     // Update Bag Count in Nav
@@ -137,10 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const toast = document.createElement('div');
         toast.className = `vp-toast ${type}`;
-        toast.innerHTML = `
-            <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}"></i>
-            <span>${message}</span>
-        `;
+        const icon = document.createElement('i');
+        icon.className = `bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}`;
+        const span = document.createElement('span');
+        span.textContent = message;
+        toast.appendChild(icon);
+        toast.appendChild(span);
         
         container.appendChild(toast);
         
