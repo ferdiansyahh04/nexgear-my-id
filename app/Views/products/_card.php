@@ -36,7 +36,7 @@ if (empty($secondaryImage)) {
 }
 ?>
 
-<article class="product-card h-100 d-flex flex-column border-0">
+<article class="product-card or-card-elevated h-100 d-flex flex-column border-0">
     <!-- Image Area -->
     <a href="<?= base_url('/products/' . $product['id']) ?>" class="d-block product-media-container position-relative overflow-hidden" style="aspect-ratio: 1/1; background: #fff;">
         <div class="h-100 w-100 p-5 d-flex align-items-center justify-content-center product-media">

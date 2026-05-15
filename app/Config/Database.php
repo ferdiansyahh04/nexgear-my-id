@@ -14,7 +14,7 @@ class Database extends Config
         'hostname' => 'localhost',
         'username' => 'root',
         'password' => '',
-        'database' => 'hypernex_store',
+        'database' => 'nexgear_store',
         'DBDriver' => 'MySQLi',
         'DBPrefix' => '',
         'pConnect' => false,

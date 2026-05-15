@@ -5,15 +5,19 @@
         <!-- Left: Logo -->
         <div class="nav-left" style="flex: 1;">
             <a class="navbar-brand m-0" href="<?= base_url('/') ?>" style="font-family: 'Space Grotesk', sans-serif;">
-                <span class="fw-bold text-dark fs-4 tracking-tight">HYPERNEX</span>
+                <span class="fw-bold text-dark fs-4 tracking-tight">NEXGEAR</span>
             </a>
         </div>
         
         <!-- Center: Menu Toggle -->
         <div class="nav-center text-center d-none d-lg-block" style="flex: 1;">
-            <button id="menuToggleText" class="btn btn-link text-dark text-decoration-none text-uppercase fw-bold p-0 d-flex align-items-center justify-content-center mx-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; font-size: 0.85rem;">
-                <span class="me-2">Menu</span>
-                <i class="bi bi-list fs-5"></i>
+            <button id="menuToggleText" class="btn btn-link text-dark text-decoration-none text-uppercase fw-bold p-0 d-flex align-items-center justify-content-center mx-auto menu-toggle-premium" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; font-size: 0.85rem;">
+                <span class="menu-text me-3">Menu</span>
+                <div class="burger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </button>
         </div>
         
@@ -95,11 +99,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (mainNav && menuToggleBtn) {
         mainNav.addEventListener('show.bs.collapse', function () {
-            menuToggleBtn.innerHTML = 'Close <i class="bi bi-x-lg fs-5 ms-2"></i>';
+            menuToggleBtn.classList.add('active');
+            const menuText = menuToggleBtn.querySelector('.menu-text');
+            if (menuText) menuText.innerText = 'Close';
         });
         
         mainNav.addEventListener('hide.bs.collapse', function () {
-            menuToggleBtn.innerHTML = '<span class="me-2">Menu</span> <i class="bi bi-list fs-5"></i>';
+            menuToggleBtn.classList.remove('active');
+            const menuText = menuToggleBtn.querySelector('.menu-text');
+            if (menuText) menuText.innerText = 'Menu';
         });
     }
 });

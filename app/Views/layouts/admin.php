@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? 'Admin') ?> | Hypernex Admin</title>
+    <title><?= esc($title ?? 'Admin') ?> | NexGear Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
         <aside class="admin-sidebar border-end border-dark" style="width: 280px; background: #fff; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;">
             <div class="p-4 border-bottom border-dark">
                 <a class="navbar-brand m-0 d-block" href="<?= base_url('/') ?>" style="font-family: 'Space Grotesk', sans-serif;">
-                    <span class="fw-bold text-dark fs-4 tracking-tight">HYPERNEX</span>
+                    <span class="fw-bold text-dark fs-4 tracking-tight">NEXGEAR</span>
                     <span class="font-serif text-dark opacity-50 ms-1" style="font-size: 0.8rem; font-style: italic;">Vault</span>
                 </a>
             </div>

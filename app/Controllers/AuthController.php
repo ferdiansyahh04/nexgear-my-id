@@ -34,7 +34,7 @@ class AuthController extends BaseController
 
         $this->loginSession((int) $id, (string) $this->request->getPost('name'), (string) $this->request->getPost('email'), 'user');
 
-        return redirect()->to('/products')->with('success', 'Account created. Welcome to Hypernex.');
+        return redirect()->to('/products')->with('success', 'Account created. Welcome to NexGear.');
     }
 
     public function loginForm()

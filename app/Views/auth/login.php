@@ -27,14 +27,14 @@
         </form>
         
         <p class="mt-4 mb-0 text-center text-secondary small">
-            New to Hypernex? <a class="link-accent" href="<?= base_url('/register') ?>">Create an account</a>
+            New to NexGear? <a class="link-accent" href="<?= base_url('/register') ?>">Create an account</a>
         </p>
 
         <div class="demo-info">
             <p class="small text-secondary mb-2 fw-bold"><i class="bi bi-info-circle me-1"></i> Demo Accounts:</p>
             <div class="d-flex flex-column gap-1 small">
-                <code class="text-primary-light">Admin: admin@hypernex.test / password</code>
-                <code class="text-primary-light">User: user@hypernex.test / password</code>
+                <code class="text-primary-light">Admin: admin@nexgear.test / password</code>
+                <code class="text-primary-light">User: user@nexgear.test / password</code>
             </div>
         </div>
     </div>

@@ -6,7 +6,7 @@
 <section class="position-relative w-100" style="height: 100vh; margin-top: -85px; border-bottom: 1px solid var(--border);">
     <!-- Background Image with Overlay -->
     <div style="position: absolute; inset: 0; z-index: 1;">
-        <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=1920&auto=format&fit=crop" alt="Hypernex Keyboard Setup" style="width: 100%; height: 100%; object-fit: cover;">
+        <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=1920&auto=format&fit=crop" alt="NexGear Keyboard Setup" style="width: 100%; height: 100%; object-fit: cover;">
         <!-- Dark Overlay for Text Visibility -->
         <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 40%, transparent 100%);"></div>
     </div>
@@ -62,7 +62,7 @@
         </h2>
         <p class="or-split-text">
             Every detail is a deliberate choice — from the click of each switch to the curve of every keycap. 
-            Hypernex exists for those who believe their tools should be as intentional as their craft.
+            NexGear exists for those who believe their tools should be as intentional as their craft.
         </p>
         <a href="<?= base_url('/collection') ?>" class="or-split-link">
             Learn More <span>→</span>
@@ -119,16 +119,16 @@
 <!-- ========== SECTION 7: SECOND MARQUEE ========== -->
 <div class="or-marquee">
     <div class="or-marquee-track">
-        <span>✦ Hypernex</span>
+        <span>✦ NexGear</span>
         <span>✦ Tactile Mastery</span>
         <span>✦ Built to Last</span>
-        <span>✦ Hypernex</span>
+        <span>✦ NexGear</span>
         <span>✦ Tactile Mastery</span>
         <span>✦ Built to Last</span>
-        <span>✦ Hypernex</span>
+        <span>✦ NexGear</span>
         <span>✦ Tactile Mastery</span>
         <span>✦ Built to Last</span>
-        <span>✦ Hypernex</span>
+        <span>✦ NexGear</span>
         <span>✦ Tactile Mastery</span>
         <span>✦ Built to Last</span>
     </div>

@@ -1,6 +1,6 @@
 /* 
   =========================================
-  HYPERNEX REFINED DESIGN SYSTEM
+  NEXGEAR REFINED DESIGN SYSTEM
   Clean, Premium, Controlled (Linear/Apple Style)
   =========================================
 */
@@ -1539,3 +1539,151 @@ h3 {
     background: #fff;
     color: #000;
 }
+
+/* 
+  =========================================
+  PREMIUM UI ANIMATIONS (UIVERSE INSPIRED)
+  =========================================
+*/
+
+/* 1. Animated Burger Menu */
+.menu-toggle-premium {
+    position: relative;
+    z-index: 1001;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.burger-icon {
+    width: 24px;
+    height: 18px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.burger-icon span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center;
+}
+
+.menu-toggle-premium.active .burger-icon span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.menu-toggle-premium.active .burger-icon span:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.menu-toggle-premium.active .burger-icon span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* 2. Neobrutalist Product Card Elevation */
+.or-card-elevated {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #fff !important;
+    border: 1px solid var(--border) !important;
+}
+
+.or-card-elevated:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0px 0px var(--border);
+    z-index: 10;
+}
+
+/* 3. Neobrutalist Button Shift */
+.or-cart-btn-minimal {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    z-index: 1;
+}
+
+.or-cart-btn-minimal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--border);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: -1;
+}
+
+.or-cart-btn-minimal:hover:not(:disabled) {
+    color: #fff !important;
+}
+
+.or-cart-btn-minimal:hover:not(:disabled)::before {
+    transform: translateY(0);
+}
+
+.or-cart-btn-minimal:active:not(:disabled) {
+    transform: translate(2px, 2px);
+}
+
+/* Custom Cursor interaction for Premium Feel */
+.custom-cursor {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    background: #000;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    z-index: 10000;
+    opacity: 0;
+    transform: scale(0);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    mix-blend-mode: normal;
+}
+
+.custom-cursor.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.product-card:hover {
+    cursor: none !important;
+}
+
+
+/* 4. Flying to Bag Animation */
+.flying-img {
+    position: fixed !important;
+    z-index: 10001 !important;
+    pointer-events: none;
+    object-fit: contain;
+    transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 50%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    background: #fff;
+    border: 2px solid #000;
+}
+
+.bag-pulse {
+    animation: bag-pulse 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bag-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); color: #000; }
+    100% { transform: scale(1); }
+}
+
+
+

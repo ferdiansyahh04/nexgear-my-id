@@ -14,7 +14,7 @@ class HomeController extends BaseController
             ->find();
 
         return view('home', [
-            'title' => 'Hypernex Store',
+            'title' => 'NexGear Store',
             'products' => $products,
         ]);
     }

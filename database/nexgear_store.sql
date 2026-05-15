@@ -1,8 +1,8 @@
-CREATE DATABASE IF NOT EXISTS hypernex_store
+CREATE DATABASE IF NOT EXISTS nexgear_store
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
-USE hypernex_store;
+USE nexgear_store;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS cart_items;
@@ -69,8 +69,8 @@ CREATE TABLE cart_items (
 ) ENGINE=InnoDB;
 
 INSERT INTO users (name, email, password, role, created_at, updated_at) VALUES
-('Admin Hypernex', 'admin@hypernex.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'admin', NOW(), NOW()),
-('Demo User', 'user@hypernex.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'user', NOW(), NOW());
+('Admin NexGear', 'admin@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'admin', NOW(), NOW()),
+('Demo User', 'user@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'user', NOW(), NOW());
 
 INSERT INTO products (name, description, price, stock, image, created_at, updated_at) VALUES
 ('Nebula K87 Mechanical Keyboard', 'Compact hot-swappable keyboard with RGB lighting and tactile switches.', 899000, 14, 'default-product.svg', NOW(), NOW()),

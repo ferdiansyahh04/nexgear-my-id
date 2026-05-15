@@ -1,12 +1,12 @@
-# Hypernex® Elite Storefront
+# NexGear® Elite Storefront
 
 A premium, high-conversion e-commerce platform for elite gaming hardware. Built with **CodeIgniter 4**, **MySQL**, and a **Tech-Editorial** design system inspired by brutalist aesthetics and precision engineering.
 
-![Hypernex Banner](https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=1200&auto=format&fit=crop)
+![NexGear Banner](https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=1200&auto=format&fit=crop)
 
 ## 💎 Design Philosophy
 
-The Hypernex Store follows a **Brutalist Editorial** aesthetic, prioritizing visual impact and high-performance UX:
+The NexGear Store follows a **Brutalist Editorial** aesthetic, prioritizing visual impact and high-performance UX:
 - **Elite Palette**: Deep Charcoal (`#0D0D0D`) with high-contrast borders and subtle glassmorphism.
 - **Typography**: Geometric precision using **Space Grotesk** for high-impact headers and **Inter** for clean, legible body text.
 - **Dynamic Interactions**: Leverages **Animate-On-Scroll (AOS)** for smooth component entry and custom CSS marquees for brand movement.
@@ -49,7 +49,7 @@ The Hypernex Store follows a **Brutalist Editorial** aesthetic, prioritizing vis
 ## 📁 Technical Architecture
 
 ```text
-hypernex-store/
+nexgear-store/
 ├── app/
 │   ├── Config/              # System & Security configuration
 │   ├── Controllers/         # MVC Logic (Storefront, Cart, Admin)
@@ -60,7 +60,7 @@ hypernex-store/
 │   ├── assets/              # Elite CSS, JS, and AOS libraries
 │   └── uploads/             # Product Media Storage
 ├── database/
-│   └── hypernex_store.sql   # Schema & Seed Data
+│   └── nexgear_store.sql   # Schema & Seed Data
 └── .env                     # Environment settings
 ```
 
@@ -74,12 +74,12 @@ hypernex-store/
 ### Setup Steps
 1. **Install Dependencies**: `composer install`
 2. **Configure Environment**: `cp .env.example .env` (Update DB & baseURL)
-3. **Database**: Import `database/hypernex_store.sql`
+3. **Database**: Import `database/nexgear_store.sql`
 4. **Launch**: `php spark serve` -> `http://localhost:8080`
 
 ### Seed Accounts
-- **Admin**: `admin@hypernex.test` / `password`
-- **User**: `user@hypernex.test` / `password`
+- **Admin**: `admin@nexgear.test` / `password`
+- **User**: `user@nexgear.test` / `password`
 
 ## 🔒 Security
 - **CSRF Protection**: Enabled for all state-changing requests.
@@ -87,4 +87,4 @@ hypernex-store/
 - **SQLi Prevention**: Query Builder automated parameter binding.
 
 ---
-*Created by Antigravity for the Hypernex Team. Elevating gaming commerce through precision engineering.*
+*Created by Antigravity for the NexGear Team. Elevating gaming commerce through precision engineering.*

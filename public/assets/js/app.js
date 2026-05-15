@@ -1,5 +1,5 @@
 /**
- * Hypernex Store - Elite Interaction Engine
+ * NexGear Store - Elite Interaction Engine
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,21 +35,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    // Update Bag Count in Nav
-                    const bagCounts = document.querySelectorAll('[data-bs-target="#offcanvasCart"] .ms-1');
-                    bagCounts.forEach(el => el.textContent = `(${data.cartCount})`);
-
-                    // Update Offcanvas Content
-                    const offcanvasEl = document.getElementById('offcanvasCart');
-                    if (offcanvasEl && data.html) {
-                        // Replace the entire offcanvas content or just the body?
-                        // For simplicity, let's replace the innerHTML of the offcanvas
-                        offcanvasEl.innerHTML = new DOMParser().parseFromString(data.html, 'text/html').getElementById('offcanvasCart').innerHTML;
-                        
-                        // Show the offcanvas
-                        const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
-                        bsOffcanvas.show();
+                    // Start Flying Animation
+                    const card = this.closest('.product-card');
+                    const productImg = card ? card.querySelector('.img-primary') : null;
+                    console.log('Flying animation trigger:', { card, productImg });
+                    if (productImg) {
+                        flyToCart(productImg);
+                    } else {
+                        console.warn('Could not find .img-primary in .product-card');
                     }
+
+                    // Update Bag Count and UI with a slight delay for the animation
+                    setTimeout(() => {
+                        const bagCounts = document.querySelectorAll('[data-bs-target="#offcanvasCart"] .ms-1');
+                        bagCounts.forEach(el => el.textContent = `(${data.cartCount})`);
+                        
+                        // Pulse the bag
+                        const bagLink = document.querySelector('[data-bs-target="#offcanvasCart"]');
+                        if (bagLink) {
+                            bagLink.classList.add('bag-pulse');
+                            setTimeout(() => bagLink.classList.remove('bag-pulse'), 600);
+                        }
+
+                        // Update Offcanvas Content
+                        const offcanvasEl = document.getElementById('offcanvasCart');
+                        if (offcanvasEl && data.html) {
+                            offcanvasEl.innerHTML = new DOMParser().parseFromString(data.html, 'text/html').getElementById('offcanvasCart').innerHTML;
+                            
+                            // Show the offcanvas after the flight
+                            const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                            bsOffcanvas.show();
+                        }
+                    }, 800);
                 } else {
                     showNotification(data.message || 'Error adding to bag', 'error');
                 }
@@ -137,6 +154,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    // 3. Image Hover Parallelism (Pure CSS handled, but could add fallback here)
+    // 4. Custom Cursor for Product Cards
+    const cursor = document.getElementById('customCursor');
+    const cards = document.querySelectorAll('.product-card');
+
+    if (cursor) {
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.marginLeft = '-30px'; // Half width
+            cursor.style.marginTop = '-30px';  // Half height
+        });
+
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                cursor.classList.add('active');
+                card.style.cursor = 'none';
+            });
+            card.addEventListener('mouseleave', () => {
+                cursor.classList.remove('active');
+                card.style.cursor = 'default';
+            });
+        });
+    }
+
+    /**
+     * Flying Image Animation Logic
+     */
+    function flyToCart(imgElement) {
+        if (!imgElement) return;
+
+        const bag = document.querySelector('[data-bs-target="#offcanvasCart"]');
+        if (!bag) {
+            console.error('FlyToCart: Could not find bag target [data-bs-target="#offcanvasCart"]');
+            return;
+        }
+
+        const imgRect = imgElement.getBoundingClientRect();
+        const bagRect = bag.getBoundingClientRect();
+
+        const clone = imgElement.cloneNode();
+        clone.className = 'flying-img';
+        
+        // Initial position
+        clone.style.width = imgRect.width + 'px';
+        clone.style.height = imgRect.height + 'px';
+        clone.style.top = imgRect.top + 'px';
+        clone.style.left = imgRect.left + 'px';
+        clone.style.opacity = '1';
+        clone.style.transform = 'scale(1) rotate(0deg)';
+
+        document.body.appendChild(clone);
+
+        // Target coordinates (Center of bag)
+        const targetX = bagRect.left + (bagRect.width / 2) - 20; // 20 is half of target width (40)
+        const targetY = bagRect.top + (bagRect.height / 2) - 20; // 20 is half of target height (40)
+
+        // Ensure the browser has painted the initial state before starting the transition
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Target position (Fly to bag)
+                clone.style.top = targetY + 'px';
+                clone.style.left = targetX + 'px';
+                clone.style.width = '40px';
+                clone.style.height = '40px';
+                clone.style.opacity = '0';
+                clone.style.transform = 'scale(0.1) rotate(720deg)';
+            });
+        });
+
+        setTimeout(() => {
+            clone.remove();
+        }, 1000); // Slightly longer to ensure transition completes
+    }
 });
 
