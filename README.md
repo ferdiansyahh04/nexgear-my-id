@@ -85,6 +85,3 @@ nexgear-store/
 - **CSRF Protection**: Enabled for all state-changing requests.
 - **RBAC**: Strict role-based filtering for `/admin` routes.
 - **SQLi Prevention**: Query Builder automated parameter binding.
-
----
-*Created by Antigravity for the NexGear Team. Elevating gaming commerce through precision engineering.*
