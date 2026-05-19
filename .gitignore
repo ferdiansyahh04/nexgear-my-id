@@ -6,10 +6,12 @@ writable/debugbar/*
 writable/logs/*
 writable/session/*
 writable/uploads/*
+writable/backups/*
 public/uploads/products/*
 !writable/cache/.gitkeep
 !writable/logs/.gitkeep
 !writable/session/.gitkeep
 !writable/uploads/.gitkeep
+!writable/backups/.gitkeep
 !public/uploads/products/.gitkeep
 !public/uploads/products/default-product.svg

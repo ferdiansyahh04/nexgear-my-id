@@ -12,6 +12,20 @@
                     <input type="text" name="name" class="form-control admin-input" value="<?= old('name', $product['name'] ?? '') ?>" required placeholder="e.g. Nebula K87 Keyboard">
                 </div>
 
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label class="font-serif text-muted small text-uppercase mb-2 d-block italic" style="letter-spacing: 0.1em;">Category</label>
+                        <select name="category_id" class="form-control admin-input">
+                            <option value="">— uncategorised —</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= (int) $cat['id'] ?>" <?= (int) old('category_id', $product['category_id'] ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>>
+                                    <?= esc($cat['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="font-serif text-muted small text-uppercase mb-2 d-block italic" style="letter-spacing: 0.1em;">Detailed Description</label>
                     <textarea name="description" class="form-control admin-input" rows="6" placeholder="Detailed product specifications..."><?= old('description', $product['description'] ?? '') ?></textarea>
@@ -58,6 +72,47 @@
                 </div>
             </form>
         </div>
+
+        <!-- B6 — Gallery upload (only for existing products) -->
+        <?php if (! empty($product['id'])): ?>
+            <div class="admin-table-wrap p-4 p-lg-5 mt-4">
+                <h3 class="font-serif text-muted small text-uppercase mb-4 italic" style="letter-spacing: 0.1em;">
+                    Gallery Images <span class="ms-2">(<?= count($extraImages) ?>)</span>
+                </h3>
+
+                <form action="<?= site_url('/admin/products/' . (int) $product['id'] . '/images') ?>" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center mb-4 flex-wrap">
+                    <?= csrf_field() ?>
+                    <input type="file" name="gallery_image" class="form-control admin-input" accept="image/*" required style="max-width: 360px;">
+                    <button type="submit" class="btn btn-dark py-2 px-4 rounded-0 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.1em;">
+                        + Add Image
+                    </button>
+                </form>
+
+                <?php if ($extraImages !== []): ?>
+                    <div class="row g-3">
+                        <?php foreach ($extraImages as $img): ?>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="position-relative border border-dark p-2 bg-white">
+                                    <img src="<?= base_url('uploads/products/' . esc($img['path'])) ?>" class="w-100 d-block" style="aspect-ratio: 1/1; object-fit: cover;" alt="">
+                                    <form action="<?= site_url('/admin/products/' . (int) $product['id'] . '/images/' . (int) $img['id'] . '/delete') ?>" method="post" class="position-absolute" style="top: 8px; right: 8px;" onsubmit="return confirm('Remove this image from gallery?')">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-dark btn-sm rounded-0" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p class="text-muted font-serif italic mb-0">No additional images yet. Add gallery shots above.</p>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <div class="admin-table-wrap p-4 mt-4">
+                <p class="text-muted font-serif italic mb-0">Save the product first to manage its gallery.</p>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="col-lg-4">
@@ -81,10 +136,10 @@
         <div class="admin-table-wrap p-4">
             <h3 class="font-serif text-muted small text-uppercase mb-4 italic" style="letter-spacing: 0.1em;">Guidelines</h3>
             <ul class="text-dark small ps-3 font-serif italic" style="line-height: 1.8;">
-                <li class="mb-2">Ensure high-fidelity imagery (PNG/WEBP).</li>
-                <li class="mb-2">Descriptions must be concise yet technical.</li>
-                <li class="mb-2">Verify valuation before committing.</li>
-                <li>Archive outdated assets to maintain history.</li>
+                <li class="mb-2">Pick a category to make filters work for shoppers.</li>
+                <li class="mb-2">Primary + Hover images appear on the product card.</li>
+                <li class="mb-2">Gallery images appear on the product detail page.</li>
+                <li>Use PNG/WEBP for crispest visuals.</li>
             </ul>
         </div>
     </div>
@@ -92,7 +147,6 @@
 
 
 <script>
-    // Simple live preview
     document.getElementById('productImageInput').onchange = evt => {
         const [file] = evt.target.files;
         if (file) {
@@ -102,4 +156,3 @@
 </script>
 
 <?= $this->endSection() ?>
-

@@ -23,23 +23,48 @@
             </div>
             
             <nav class="sidebar-nav flex-grow-1 p-3">
-                <div class="text-uppercase text-muted mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Inventory Management</div>
+                <?php $isAdmin = session('role') === 'admin'; ?>
+                <div class="text-uppercase text-muted mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Overview</div>
+                <a href="<?= site_url('/admin') ?>" class="admin-nav-link <?= rtrim(parse_url(current_url(), PHP_URL_PATH) ?? '', '/') === rtrim(parse_url(site_url('/admin'), PHP_URL_PATH) ?? '', '/') || str_ends_with((string) current_url(), '/admin/dashboard') ? 'active' : '' ?>">
+                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">00 /</span>
+                    Dashboard
+                </a>
+                <?php if ($isAdmin): ?>
+                <div class="text-uppercase text-muted mt-4 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Inventory Management</div>
                 <a href="<?= site_url('/admin/products') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/products') !== false ? 'active' : '' ?>">
                     <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">01 /</span>
                     Products
                 </a>
-                <a href="<?= site_url('/admin/orders') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/orders') !== false ? 'active' : '' ?>">
+                <a href="<?= site_url('/admin/categories') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/categories') !== false ? 'active' : '' ?>">
                     <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">02 /</span>
+                    Categories
+                </a>
+                <?php endif; ?>
+                <div class="text-uppercase text-muted mt-4 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Operations</div>
+                <a href="<?= site_url('/admin/orders') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/orders') !== false ? 'active' : '' ?>">
+                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">03 /</span>
                     Orders
                 </a>
-                <div class="text-uppercase text-muted mt-5 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Platform</div>
-                <a href="#" class="admin-nav-link">
-                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">03 /</span>
-                    Customers
-                </a>
-                <a href="#" class="admin-nav-link">
+                <a href="<?= site_url('/admin/reports') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/reports') !== false ? 'active' : '' ?>">
                     <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">04 /</span>
-                    Analytics
+                    Reports
+                </a>
+                <div class="text-uppercase text-muted mt-5 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Communications</div>
+                <a href="<?= site_url('/admin/messages') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/messages') !== false ? 'active' : '' ?>">
+                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">05 /</span>
+                    Messages
+                </a>
+                <?php if ($isAdmin): ?>
+                <div class="text-uppercase text-muted mt-5 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">System</div>
+                <a href="<?= site_url('/admin/audit') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/audit') !== false ? 'active' : '' ?>">
+                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">06 /</span>
+                    Audit Log
+                </a>
+                <?php endif; ?>
+                <div class="text-uppercase text-muted mt-5 mb-3 ps-3" style="font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 700;">Account</div>
+                <a href="<?= site_url('/admin/security') ?>" class="admin-nav-link <?= strpos(current_url(), 'admin/security') !== false ? 'active' : '' ?>">
+                    <span class="nav-num font-serif italic me-3" style="font-size: 0.7rem; opacity: 0.5;">07 /</span>
+                    Security (2FA)
                 </a>
             </nav>
             
@@ -50,7 +75,9 @@
                     </div>
                     <div class="overflow-hidden">
                         <div class="text-dark small fw-bold text-truncate" style="font-family: 'Space Grotesk', sans-serif;"><?= esc(session('user_email')) ?></div>
-                        <div class="text-muted font-serif italic" style="font-size: 0.7rem;">Curator</div>
+                        <div class="text-muted font-serif italic" style="font-size: 0.7rem;">
+                            <?= session('role') === 'admin' ? 'Curator (Admin)' : (session('role') === 'staff' ? 'Staff' : 'Member') ?>
+                        </div>
                     </div>
                 </div>
                 <form action="<?= base_url('/logout') ?>" method="post">
@@ -162,6 +189,54 @@
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script>
+        AOS.init({ duration: 600, once: true, easing: 'ease-out-cubic' });
+
+        // A13 — Animated stat counters (count up when scrolled into view)
+        (function () {
+            var counters = document.querySelectorAll('[data-counter]');
+            if (!counters.length) return;
+
+            function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+            function animate(el) {
+                if (el.dataset.counted === '1') return;
+                el.dataset.counted = '1';
+                var target = parseFloat(el.getAttribute('data-counter')) || 0;
+                var decimals = parseInt(el.getAttribute('data-counter-decimals') || '0', 10);
+                var duration = 1100;
+                var start = performance.now();
+
+                function tick(now) {
+                    var t = Math.min(1, (now - start) / duration);
+                    var value = target * easeOutCubic(t);
+                    el.textContent = decimals > 0
+                        ? value.toFixed(decimals)
+                        : Math.round(value).toLocaleString('id-ID');
+                    if (t < 1) requestAnimationFrame(tick);
+                    else {
+                        el.textContent = decimals > 0
+                            ? target.toFixed(decimals)
+                            : Math.round(target).toLocaleString('id-ID');
+                    }
+                }
+                requestAnimationFrame(tick);
+            }
+
+            if ('IntersectionObserver' in window) {
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) animate(entry.target);
+                    });
+                }, { threshold: 0.4 });
+                counters.forEach(function (c) { io.observe(c); });
+            } else {
+                counters.forEach(animate);
+            }
+        })();
+    </script>
 </body>
 
 </html>

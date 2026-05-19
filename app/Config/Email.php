@@ -4,123 +4,55 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 
+/**
+ * Email config — driven from `.env` so SMTP credentials never live in code.
+ *
+ * Set in your .env (example for Mailtrap dev sandbox):
+ *
+ *   email.protocol      = smtp
+ *   email.fromEmail     = no-reply@nexgear.test
+ *   email.fromName      = NexGear Store
+ *   email.SMTPHost      = sandbox.smtp.mailtrap.io
+ *   email.SMTPUser      = xxxxxxxxxxxx
+ *   email.SMTPPass      = xxxxxxxxxxxx
+ *   email.SMTPPort      = 2525
+ *   email.SMTPCrypto    = tls
+ *   email.mailType      = html
+ *
+ * Leave SMTPHost empty to fall back to PHP's built-in `mail()`.
+ */
 class Email extends BaseConfig
 {
-    public string $fromEmail  = '';
-    public string $fromName   = '';
+    public string $fromEmail  = 'no-reply@nexgear.test';
+    public string $fromName   = 'NexGear Store';
     public string $recipients = '';
 
-    /**
-     * The "user agent"
-     */
-    public string $userAgent = 'CodeIgniter';
+    public string $userAgent = 'NexGear/Mailer';
 
-    /**
-     * The mail sending protocol: mail, sendmail, smtp
-     */
     public string $protocol = 'mail';
-
-    /**
-     * The server path to Sendmail.
-     */
     public string $mailPath = '/usr/sbin/sendmail';
 
-    /**
-     * SMTP Server Hostname
-     */
-    public string $SMTPHost = '';
-
-    /**
-     * Which SMTP authentication method to use: login, plain
-     */
+    public string $SMTPHost       = '';
     public string $SMTPAuthMethod = 'login';
+    public string $SMTPUser       = '';
+    public string $SMTPPass       = '';
+    public int    $SMTPPort       = 587;
+    public int    $SMTPTimeout    = 8;
+    public bool   $SMTPKeepAlive  = false;
+    public string $SMTPCrypto     = 'tls';
 
-    /**
-     * SMTP Username
-     */
-    public string $SMTPUser = '';
+    public bool   $wordWrap = true;
+    public int    $wrapChars = 96;
+    public string $mailType = 'html';
+    public string $charset  = 'UTF-8';
+    public bool   $validate = true;
+    public int    $priority = 3;
 
-    /**
-     * SMTP Password
-     */
-    public string $SMTPPass = '';
-
-    /**
-     * SMTP Port
-     */
-    public int $SMTPPort = 25;
-
-    /**
-     * SMTP Timeout (in seconds)
-     */
-    public int $SMTPTimeout = 5;
-
-    /**
-     * Enable persistent SMTP connections
-     */
-    public bool $SMTPKeepAlive = false;
-
-    /**
-     * SMTP Encryption.
-     *
-     * @var string '', 'tls' or 'ssl'. 'tls' will issue a STARTTLS command
-     *             to the server. 'ssl' means implicit SSL. Connection on port
-     *             465 should set this to ''.
-     */
-    public string $SMTPCrypto = 'tls';
-
-    /**
-     * Enable word-wrap
-     */
-    public bool $wordWrap = true;
-
-    /**
-     * Character count to wrap at
-     */
-    public int $wrapChars = 76;
-
-    /**
-     * Type of mail, either 'text' or 'html'
-     */
-    public string $mailType = 'text';
-
-    /**
-     * Character set (utf-8, iso-8859-1, etc.)
-     */
-    public string $charset = 'UTF-8';
-
-    /**
-     * Whether to validate the email address
-     */
-    public bool $validate = false;
-
-    /**
-     * Email Priority. 1 = highest. 5 = lowest. 3 = normal
-     */
-    public int $priority = 3;
-
-    /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
-     */
-    public string $CRLF = "\r\n";
-
-    /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
-     */
+    public string $CRLF    = "\r\n";
     public string $newline = "\r\n";
 
-    /**
-     * Enable BCC Batch Mode.
-     */
     public bool $BCCBatchMode = false;
+    public int  $BCCBatchSize = 200;
 
-    /**
-     * Number of emails in each BCC batch
-     */
-    public int $BCCBatchSize = 200;
-
-    /**
-     * Enable notify message from server
-     */
     public bool $DSN = false;
 }

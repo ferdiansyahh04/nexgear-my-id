@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\AdminFilter;
 use App\Filters\AuthFilter;
+use App\Filters\StaffOrAdminFilter;
 use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
@@ -20,6 +21,7 @@ class Filters extends BaseConfig
         'secureheaders' => SecureHeaders::class,
         'auth'          => AuthFilter::class,
         'admin'         => AdminFilter::class,
+        'staff'         => StaffOrAdminFilter::class,
         'throttle'      => ThrottleFilter::class,
     ];
 
@@ -35,4 +37,22 @@ class Filters extends BaseConfig
 
     public array $methods = [];
     public array $filters = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Drop CSRF + secureheaders during automated tests so PHPUnit's
+        // FeatureTestTrait can hit POST endpoints without seeding tokens.
+        if (ENVIRONMENT === 'testing') {
+            $this->globals['before'] = array_values(array_diff(
+                $this->globals['before'],
+                ['csrf']
+            ));
+            $this->globals['after'] = array_values(array_diff(
+                $this->globals['after'],
+                ['secureheaders']
+            ));
+        }
+    }
 }

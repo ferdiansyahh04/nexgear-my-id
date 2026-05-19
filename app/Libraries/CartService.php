@@ -54,6 +54,33 @@ class CartService
     }
 
     /**
+     * Subtotal alias for clarity when juxtaposed with discount/total.
+     */
+    public function subtotal(?array $items = null): float
+    {
+        return $this->total($items);
+    }
+
+    /**
+     * Final amount after applying any session-bound coupon.
+     */
+    public function finalTotal(?array $items = null): float
+    {
+        $subtotal = $this->subtotal($items);
+        $discount = (new \App\Libraries\CouponService())->currentDiscount($subtotal);
+        return max(0, $subtotal - $discount);
+    }
+
+    /**
+     * Discount currently applied (0 if no coupon).
+     */
+    public function discount(?array $items = null): float
+    {
+        $subtotal = $this->subtotal($items);
+        return (new \App\Libraries\CouponService())->currentDiscount($subtotal);
+    }
+
+    /**
      * Get the raw cart count (sum of all quantities).
      */
     public function count(): int

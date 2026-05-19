@@ -27,7 +27,15 @@
         </button>
         
         <!-- Right: Actions -->
-        <div class="nav-right d-none d-lg-flex justify-content-end align-items-center gap-4" style="flex: 1;">
+        <div class="nav-right d-none d-lg-flex justify-content-end align-items-center gap-3" style="flex: 1;">
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+                <i class="bi bi-moon" data-theme-icon></i>
+            </button>
+            <button type="button" class="nav-search-trigger nav-link text-dark fw-bold d-flex align-items-center bg-transparent border-0 p-0"
+                    aria-label="Open search"
+                    style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; letter-spacing: 0.1em;">
+                SEARCH <i class="bi bi-search ms-2"></i>
+            </button>
             <a href="#" class="nav-link text-dark fw-bold d-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; letter-spacing: 0.1em;">
                 BAG <span class="ms-1">(<?= esc($cartCount) ?>)</span>
             </a>
@@ -43,6 +51,7 @@
                     <ul class="list-unstyled">
                         <li class="mb-3"><a href="<?= base_url('/') ?>" class="text-dark text-decoration-none fs-3 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Home</a></li>
                         <li class="mb-3"><a href="<?= base_url('/collection') ?>" class="text-dark text-decoration-none fs-3 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Our Shop</a></li>
+                        <li class="mb-3"><a href="<?= base_url('/contact') ?>" class="text-dark text-decoration-none fs-3 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Contact</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4 mb-4 mb-lg-0">
@@ -50,8 +59,12 @@
                     <ul class="list-unstyled">
                         <?php if (session('is_logged_in')): ?>
                             <li class="mb-2"><span class="text-dark opacity-50 fw-bold small text-uppercase"><?= esc(session('user_email')) ?></span></li>
+                            <li class="mb-3"><a href="<?= base_url('/account') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Dashboard</a></li>
+                            <li class="mb-3"><a href="<?= base_url('/account/orders') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Order History</a></li>
+                            <li class="mb-3"><a href="<?= base_url('/account/wishlist') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Wishlist <?php $wc = (new \App\Libraries\WishlistService())->count(); echo $wc > 0 ? '(' . $wc . ')' : ''; ?></a></li>
+                            <li class="mb-3"><a href="<?= base_url('/account/addresses') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Address Book</a></li>
                             <?php if (session('role') === 'admin'): ?>
-                                <li class="mb-3"><a href="<?= base_url('/admin/products') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Admin Portal</a></li>
+                                <li class="mb-3"><a href="<?= base_url('/admin') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Admin Portal</a></li>
                             <?php endif; ?>
                             <li class="mb-3">
                                 <form action="<?= base_url('/logout') ?>" method="post" class="m-0">
@@ -61,6 +74,7 @@
                             </li>
                         <?php else: ?>
                             <li class="mb-3"><a href="<?= base_url('/login') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Login</a></li>
+                            <li class="mb-3"><a href="<?= base_url('/account/wishlist') ?>" class="text-dark text-decoration-none fs-5 fw-bold text-uppercase" style="font-family: 'Space Grotesk', sans-serif;">Wishlist <?php $wc = (new \App\Libraries\WishlistService())->count(); echo $wc > 0 ? '(' . $wc . ')' : ''; ?></a></li>
                         <?php endif; ?>
                     </ul>
                 </div>
@@ -70,6 +84,29 @@
 </nav>
 
 <?= view('partials/offcanvas_cart', ['cartData' => (new \App\Libraries\CartService())->items()]) ?>
+
+<!-- Live Search Overlay -->
+<div class="search-overlay" id="searchOverlay" aria-hidden="true" role="dialog" aria-label="Search products">
+    <button type="button" class="search-overlay-close" aria-label="Close search">
+        <i class="bi bi-x-lg"></i>
+    </button>
+    <div class="search-overlay-inner">
+        <div class="search-overlay-eyebrow">
+            <span class="font-serif me-2">SEARCH /</span> Find your gear
+        </div>
+        <form action="<?= base_url('/products') ?>" method="get" class="search-overlay-form" id="searchOverlayForm" autocomplete="off">
+            <input type="search" name="q" id="searchOverlayInput" class="search-overlay-input"
+                   placeholder="Search keyboards, mice, headsets…" aria-label="Search query" autofocus>
+            <button type="submit" class="search-overlay-submit" aria-label="Submit search">
+                <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
+        <div class="search-overlay-hint" id="searchOverlayHint">
+            Type at least 2 characters to see suggestions.
+        </div>
+        <div class="search-overlay-results" id="searchOverlayResults" aria-live="polite"></div>
+    </div>
+</div>
 
 <style>
 .vp-nav {

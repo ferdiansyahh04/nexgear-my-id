@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Libraries\CartService;
+use App\Libraries\CouponService;
+use App\Models\AddressModel;
 use App\Models\CartItemModel;
 use App\Models\CartModel;
 use App\Models\ProductModel;
@@ -18,12 +20,24 @@ class CheckoutController extends BaseController
 
     public function index()
     {
-        $items = $this->cart->items();
+        $items     = $this->cart->items();
+        $subtotal  = $this->cart->subtotal($items);
+        $discount  = $this->cart->discount($items);
+        $coupon    = (new CouponService())->applied();
+        $addresses = (new AddressModel())
+            ->where('user_id', (int) session('user_id'))
+            ->orderBy('is_default', 'DESC')
+            ->orderBy('updated_at', 'DESC')
+            ->findAll();
 
         return view('checkout/index', [
-            'title' => 'Checkout',
-            'items' => $items,
-            'total' => $this->cart->total($items),
+            'title'     => 'Checkout',
+            'items'     => $items,
+            'subtotal'  => $subtotal,
+            'discount'  => $discount,
+            'total'     => $subtotal - $discount,
+            'coupon'    => $coupon,
+            'addresses' => $addresses,
         ]);
     }
 
@@ -49,16 +63,24 @@ class CheckoutController extends BaseController
         }
 
         // ── 3. Process checkout with stock locking ──────────────
-        $cartModel = new CartModel();
-        $itemModel = new CartItemModel();
-        $db        = db_connect();
+        $cartModel  = new CartModel();
+        $itemModel  = new CartItemModel();
+        $couponSvc  = new CouponService();
+        $db         = db_connect();
+
+        $subtotal     = $this->cart->subtotal($items);
+        $discount     = $couponSvc->currentDiscount($subtotal);
+        $appliedCode  = $couponSvc->applied();
+        $finalTotal   = max(0, $subtotal - $discount);
 
         $db->transStart();
 
         $cartId = $cartModel->insert([
             'user_id'              => session('user_id'),
             'status'               => 'checked_out',
-            'total'                => $this->cart->total($items),
+            'total'                => $finalTotal,
+            'coupon_code'          => $discount > 0 ? $appliedCode : null,
+            'discount'             => $discount,
             'shipping_name'        => trim((string) $this->request->getPost('shipping_name')),
             'shipping_phone'       => trim((string) $this->request->getPost('shipping_phone')),
             'shipping_address'     => trim((string) $this->request->getPost('shipping_address')),
@@ -98,8 +120,47 @@ class CheckoutController extends BaseController
             return redirect()->back()->with('error', 'Checkout failed. Please try again.');
         }
 
-        session()->remove('cart');
+        // Increment coupon usage outside the transaction (idempotent enough)
+        if ($discount > 0 && $appliedCode !== null) {
+            $couponSvc->recordUsage($appliedCode);
+        }
 
-        return redirect()->to('/products')->with('success', 'Checkout complete. Order #' . $cartId . ' saved.');
+        // Order confirmation email (best-effort)
+        $userEmail = (string) (session('user_email') ?? '');
+        if ($userEmail !== '') {
+            $hydratedItems = [];
+            foreach ($items as $line) {
+                $hydratedItems[] = [
+                    'price'    => (float) $line['product']['price'],
+                    'quantity' => (int) $line['qty'],
+                    'product'  => ['name' => $line['product']['name']],
+                ];
+            }
+            (new \App\Libraries\MailerService())->send(
+                $userEmail,
+                'Order #' . $cartId . ' confirmed',
+                'emails/order_placed',
+                [
+                    'order' => [
+                        'id'                => $cartId,
+                        'status'            => 'checked_out',
+                        'total'             => $finalTotal,
+                        'discount'          => $discount,
+                        'coupon_code'       => $appliedCode,
+                        'shipping_name'     => trim((string) $this->request->getPost('shipping_name')),
+                        'shipping_city'     => trim((string) $this->request->getPost('shipping_city')),
+                    ],
+                    'items'       => $hydratedItems,
+                    'statusLabel' => 'Placed',
+                ]
+            );
+        }
+
+        session()->remove('cart');
+        $couponSvc->clear();
+        (new \App\Libraries\AbandonedCartService())->clearForUser((int) session('user_id'));
+
+        return redirect()->to('/account/orders/' . $cartId)
+            ->with('success', 'Checkout complete. Order #' . $cartId . ' saved.');
     }
 }

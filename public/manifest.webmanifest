@@ -1,0 +1,39 @@
+{
+  "name": "NexGear Store",
+  "short_name": "NexGear",
+  "description": "Premium gaming gear — keyboards, mice, headsets, and more.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f2f2",
+  "theme_color": "#0d0d0d",
+  "lang": "en",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Collection",
+      "url": "/products",
+      "description": "Explore the curated catalogue"
+    },
+    {
+      "name": "Your Cart",
+      "url": "/cart",
+      "description": "Review items in your bag"
+    }
+  ]
+}

@@ -12,13 +12,26 @@
     </div>
     
     <!-- Content Overlay (Bottom Left) -->
-    <div class="container-fluid px-4 px-lg-5 position-absolute w-100" style="bottom: 8vh; z-index: 2;">
-        <h1 style="font-size: clamp(2.5rem, 6vw, 5rem); font-family: 'Space Grotesk', sans-serif; font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-            SHOP NOW
+    <div class="container-fluid px-4 px-lg-5 position-absolute w-100 hero-overlay" style="bottom: 8vh; z-index: 2;">
+        <span class="hero-eyebrow">
+            <span class="font-serif me-2">01 /</span> New Drop · Curated for the Daily Ritual
+        </span>
+        <h1 class="hero-title">
+            Built for the<br>
+            <span class="font-serif" style="text-transform: none; font-style: italic;">Modern</span> Workspace.
         </h1>
-        <p style="font-size: clamp(1.5rem, 4vw, 3rem); font-family: 'Space Grotesk', sans-serif; font-weight: 400; color: rgba(255,255,255,0.7); text-transform: uppercase; line-height: 1.1; letter-spacing: -0.02em; margin: 0;">
-            EXPLORE OUR FIRST<br>COLLECTION
+        <p class="hero-sub">
+            Mechanical decks, low-latency rodents, and surround stages —
+            all chosen, all built to outlast the upgrade cycle.
         </p>
+        <div class="hero-actions">
+            <a href="<?= base_url('/products') ?>" class="hero-btn hero-btn-primary">
+                Explore Collection <span class="ms-2">→</span>
+            </a>
+            <a href="#collection" class="hero-btn hero-btn-secondary">
+                Featured Below
+            </a>
+        </div>
     </div>
     
     <!-- Slide Indicators -->
@@ -133,6 +146,8 @@
         <span>✦ Built to Last</span>
     </div>
 </div>
+
+<?= view('partials/recently_viewed') ?>
 
 
 <?= $this->endSection() ?>

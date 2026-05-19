@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\WishlistService;
 use App\Models\UserModel;
 
 class AuthController extends BaseController
@@ -61,9 +62,57 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Invalid email or password.');
         }
 
+        // 2FA gate — challenge before issuing the session.
+        if ((int) ($user['totp_enabled'] ?? 0) === 1) {
+            session()->set([
+                'tfa_user_id' => (int) $user['id'],
+                'tfa_started_at' => time(),
+            ]);
+            return redirect()->to('/login/2fa');
+        }
+
         $this->loginSession((int) $user['id'], $user['name'], $user['email'], $user['role']);
 
-        return redirect()->to($user['role'] === 'admin' ? '/admin/products' : '/products')
+        return redirect()->to($user['role'] === 'admin' || $user['role'] === 'staff' ? '/admin' : '/products')
+            ->with('success', 'Signed in.');
+    }
+
+    public function twoFactorForm()
+    {
+        if (! session('tfa_user_id')) {
+            return redirect()->to('/login');
+        }
+        return view('auth/two_factor', ['title' => '2FA Verification']);
+    }
+
+    public function twoFactorVerify()
+    {
+        $userId = (int) session('tfa_user_id');
+        if ($userId < 1) return redirect()->to('/login');
+
+        // Bound the challenge window — 5 minutes
+        if (time() - (int) session('tfa_started_at') > 300) {
+            session()->remove('tfa_user_id');
+            session()->remove('tfa_started_at');
+            return redirect()->to('/login')->with('error', '2FA challenge expired. Sign in again.');
+        }
+
+        $code = (string) $this->request->getPost('code');
+        $user = (new UserModel())->find($userId);
+        if (! $user) {
+            return redirect()->to('/login')->with('error', 'Account not found.');
+        }
+
+        if (! (new \App\Libraries\TotpService())->verify((string) $user['totp_secret'], $code)) {
+            return redirect()->back()->with('error', 'Invalid 2FA code. Try again.');
+        }
+
+        session()->remove('tfa_user_id');
+        session()->remove('tfa_started_at');
+
+        $this->loginSession((int) $user['id'], $user['name'], $user['email'], $user['role']);
+
+        return redirect()->to($user['role'] === 'admin' || $user['role'] === 'staff' ? '/admin' : '/products')
             ->with('success', 'Signed in.');
     }
 
@@ -84,5 +133,8 @@ class AuthController extends BaseController
             'role' => $role,
             'is_logged_in' => true,
         ]);
+
+        // B3: Lift any guest wishlist picks into the persistent table.
+        (new WishlistService())->mergeGuestIntoUser($id);
     }
 }

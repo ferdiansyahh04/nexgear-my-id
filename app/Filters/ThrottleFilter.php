@@ -18,8 +18,9 @@ class ThrottleFilter implements FilterInterface
     {
         $throttler = Services::throttler();
 
-        // Build a key based on IP + route path for granular limiting
-        $key = 'throttle_' . $request->getIPAddress() . '_' . md5((string) current_url());
+        // Sanitize IP (IPv6 contains ":" which CodeIgniter cache treats as reserved)
+        $ip  = preg_replace('/[^a-zA-Z0-9]/', '_', (string) $request->getIPAddress());
+        $key = 'throttle_' . $ip . '_' . md5((string) current_url());
 
         // Allow 5 requests per 60 seconds
         if (! $throttler->check($key, 5, MINUTE)) {

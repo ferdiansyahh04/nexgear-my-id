@@ -8,17 +8,21 @@
             <h1 class="auth-title">Sign in</h1>
         </div>
         
-        <form action="<?= base_url('/login') ?>" method="post" class="vstack gap-3">
+        <form action="<?= base_url('/login') ?>" method="post" class="vstack gap-3" data-validate novalidate>
             <?= csrf_field() ?>
-            <div>
+            <div data-field>
                 <label class="form-label text-secondary small fw-bold" for="email">Email Address</label>
-                <input class="form-control vp-input" type="email" id="email" name="email" value="<?= old('email') ?>" placeholder="name@example.com" required autofocus>
+                <input class="form-control vp-input" type="email" id="email" name="email" value="<?= old('email') ?>" placeholder="name@example.com" required autofocus
+                       data-rule="email">
+                <div class="field-error" data-error></div>
             </div>
-            <div>
+            <div data-field>
                 <div class="d-flex justify-content-between">
                     <label class="form-label text-secondary small fw-bold" for="password">Password</label>
                 </div>
-                <input class="form-control vp-input" type="password" id="password" name="password" placeholder="••••••••" required>
+                <input class="form-control vp-input" type="password" id="password" name="password" placeholder="••••••••" required
+                       data-rule="required">
+                <div class="field-error" data-error></div>
             </div>
             
             <button class="btn btn-primary-glow w-100 py-3 mt-2" type="submit">

@@ -54,8 +54,10 @@ jobs:
           sed -i 's/database.default.database = nexgear_store/database.default.database = nexgear_test/' .env
           sed -i 's/database.default.password =/database.default.password = root/' .env
 
-      - name: Import database schema
-        run: mysql -h 127.0.0.1 -u root -proot nexgear_test < database/nexgear_store.sql
+      - name: Provision test database
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS nexgear_test CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+          mysql -h 127.0.0.1 -u root -proot nexgear_test < database/nexgear_store.sql
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --testdox
