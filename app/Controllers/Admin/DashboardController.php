@@ -102,7 +102,7 @@ class DashboardController extends BaseController
         // ── Engagement ───────────────────────────────────────
         $newsletterCount = (int) (new NewsletterSubscriberModel())
             ->where('confirmed', 1)
-            ->whereNull('unsubscribed_at')
+            ->where('unsubscribed_at IS NULL', null, false)
             ->countAllResults();
         $newMessages = (int) (new ContactMessageModel())
             ->where('status', 'new')

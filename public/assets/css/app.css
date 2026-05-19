@@ -5498,3 +5498,28 @@ details[open] > summary::before {
     /* Avoid content sitting under the bar on long pages */
     body { padding-bottom: 64px; }
 }
+
+
+/* 
+  =========================================
+  ADMIN DASHBOARD CHART HEIGHT LOCK
+  =========================================
+  Chart.js with maintainAspectRatio:false will stretch infinitely if its
+  parent has no height. Lock the wrapper at a sensible viewport-aware
+  height so Quick Actions sidebar stays aligned with the chart panel.
+*/
+.chart-shell {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    min-height: 280px;
+}
+
+.chart-shell canvas {
+    /* Chart.js sizes via wrapper, but ensure no overflow */
+    max-height: 100%;
+}
+
+@media (max-width: 991px) {
+    .chart-shell { height: 260px; }
+}

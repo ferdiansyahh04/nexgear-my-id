@@ -83,7 +83,9 @@ function _rp_compact(float $n): string {
                     Rp & orders
                 </span>
             </div>
-            <canvas id="revenueChart" height="110"></canvas>
+            <div class="chart-shell">
+                <canvas id="revenueChart"></canvas>
+            </div>
         </div>
     </div>
 
