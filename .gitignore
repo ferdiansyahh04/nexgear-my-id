@@ -1,6 +1,8 @@
 vendor/
 .phpunit.cache/
 .env
+.commit-msg.tmp
+writable/diag_*.php
 writable/cache/*
 writable/debugbar/*
 writable/logs/*
