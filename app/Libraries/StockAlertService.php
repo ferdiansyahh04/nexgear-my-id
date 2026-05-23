@@ -104,9 +104,12 @@ class StockAlertService
      */
     public function sweepAll(): int
     {
+        // CI's Query Builder ->select('DISTINCT col') quotes the whole string
+        // as a single identifier, which breaks the SQL. Use distinct() instead.
         $candidates = db_connect()
             ->table('stock_alerts AS sa')
-            ->select('DISTINCT sa.product_id')
+            ->select('sa.product_id')
+            ->distinct()
             ->join('products AS p', 'p.id = sa.product_id')
             ->where('sa.notified_at IS NULL', null, false)
             ->where('p.stock >', 0)

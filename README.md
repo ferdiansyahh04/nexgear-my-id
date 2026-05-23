@@ -227,10 +227,13 @@ Add to crontab (`crontab -e -u www-data`):
 
 ```cron
 # Nudge customers about idle carts
-*/30 * * * *  cd /var/www/nexgear-store && /usr/bin/php spark remind:abandoned >> writable/logs/cron.log 2>&1
+*/30 * * * *  cd /var/www/nexgear-store && /usr/bin/php spark cart:remind-abandoned >> writable/logs/cron.log 2>&1
 
 # Notify users when products they wanted return to stock
-*/15 * * * *  cd /var/www/nexgear-store && /usr/bin/php spark dispatch:stock-alerts >> writable/logs/cron.log 2>&1
+*/15 * * * *  cd /var/www/nexgear-store && /usr/bin/php spark stock:dispatch-alerts >> writable/logs/cron.log 2>&1
+
+# Weekly DB backup (writable/backups/)
+0 3 * * 0     cd /var/www/nexgear-store && /usr/bin/php spark db:backup >> writable/logs/cron.log 2>&1
 ```
 
 ### 6. Default Seed Accounts
