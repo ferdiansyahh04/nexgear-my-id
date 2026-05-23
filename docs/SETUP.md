@@ -69,13 +69,13 @@ mysql -u root nexgear_store < database/nexgear_store.sql
 
 The schema file creates the database, all 17 tables, and seeds the demo accounts + categories + products + coupons.
 
-**Option B — Migrations** (if you want the migration history visible):
+**About migrations**
 
-```bash
-mysql -u root -e "CREATE DATABASE nexgear_store CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
-php spark migrate
-php spark db:seed MainSeeder
-```
+For a brand-new local database, use the canonical SQL import above. The current
+migration files are incremental changes on top of the base schema, not a full
+from-empty schema builder, so `php spark migrate` is intended for future
+updates after the base database already exists and the migration history is in
+sync.
 
 ### 5. Verify accounts
 
@@ -106,7 +106,7 @@ php spark serve
 
 Open <http://localhost:8080>. Default credentials:
 
-- **Admin** — `admin@nexgear.test` / `admin123`
+- **Admin** — `admin@nexgear.test` / `password`
 - **User** — `user@nexgear.test` / `password`
 
 ## Test setup

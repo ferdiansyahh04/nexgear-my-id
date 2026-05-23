@@ -1587,7 +1587,7 @@ h3 {
 /* 2. Neobrutalist Product Card Elevation */
 .or-card-elevated {
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    background: #fff !important;
+    background: var(--bg-panel);
     border: 1px solid var(--border) !important;
 }
 
@@ -1595,6 +1595,16 @@ h3 {
     transform: translate(-4px, -4px);
     box-shadow: 8px 8px 0px 0px var(--border);
     z-index: 10;
+}
+
+/* Dark theme — force panel surface for the article shell so any
+   gap/border between media + info + cta doesn't leak white. */
+[data-theme="dark"] .or-card-elevated {
+    background: #161616;
+}
+
+[data-theme="dark"] .or-card-elevated .product-media-shell {
+    background: #202020;
 }
 
 /* 3. Neobrutalist Button Shift */
@@ -1720,12 +1730,12 @@ h3 {
     transform: scale(1);
 }
 
-.product-card:hover .img-primary {
+.product-card.has-secondary:hover .img-primary {
     opacity: 0;
     transform: scale(1.08);
 }
 
-.product-card:hover .img-secondary {
+.product-card.has-secondary:hover .img-secondary {
     opacity: 1;
     transform: scale(1.05);
 }
@@ -3423,7 +3433,8 @@ main.is-leaving {
 */
 .product-media-container {
     aspect-ratio: 1 / 1;
-    background: #fff;
+    background: #f4f4f4;
+    min-height: 220px;
 }
 
 .product-card-info,
@@ -3447,6 +3458,10 @@ main.is-leaving {
 [data-theme="dark"] .product-card-info,
 [data-theme="dark"] .product-card-cta {
     background: #161616;
+}
+
+[data-theme="dark"] .product-media-container {
+    background: #202020;
 }
 
 [data-theme="dark"] .product-card-name-link,
@@ -5403,11 +5418,11 @@ details[open] > summary::before {
 
 /* Tap-flip helper for product card image swap on touch.
    Card gets `.is-flipped` class via JS on tap, mimicking the hover behaviour. */
-.product-card.is-flipped .img-primary {
+.product-card.has-secondary.is-flipped .img-primary {
     opacity: 0;
     transform: scale(1.08);
 }
-.product-card.is-flipped .img-secondary {
+.product-card.has-secondary.is-flipped .img-secondary {
     opacity: 1;
     transform: scale(1.05);
 }

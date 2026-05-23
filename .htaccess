@@ -1,0 +1,13 @@
+# Block direct access to project root.
+# Everything must flow through public/index.php to keep app/ + writable/ +
+# vendor/ + .env unreachable from the web.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Just in case mod_rewrite is unavailable, deny by default.
+<IfModule !mod_rewrite.c>
+    Order Deny,Allow
+    Deny from all
+</IfModule>

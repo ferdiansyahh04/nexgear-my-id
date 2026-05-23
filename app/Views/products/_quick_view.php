@@ -5,22 +5,11 @@
  * Variables:
  *   $product (array) — product row
  */
-$primary = base_url('uploads/products/' . esc($product['image'] ?: 'default-product.svg'));
-
-if ($product['image'] === 'default-product.svg' || empty($product['image'])) {
-    $name = strtolower($product['name']);
-    if (strpos($name, 'keyboard') !== false) {
-        $primary = 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=1200&auto=format&fit=crop';
-    } elseif (strpos($name, 'mouse') !== false) {
-        $primary = 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=1200&auto=format&fit=crop';
-    } elseif (strpos($name, 'headset') !== false || strpos($name, 'audio') !== false) {
-        $primary = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop';
-    } elseif (strpos($name, 'mic') !== false || strpos($name, 'stream') !== false) {
-        $primary = 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=1200&auto=format&fit=crop';
-    } else {
-        $primary = 'https://images.unsplash.com/photo-1603481546238-487240415921?q=80&w=1200&auto=format&fit=crop';
-    }
+$primaryFile = trim((string) ($product['image'] ?? ''));
+if ($primaryFile === '' || ! is_file(FCPATH . 'uploads/products/' . $primaryFile)) {
+    $primaryFile = 'default-product.svg';
 }
+$primary = base_url('uploads/products/' . rawurlencode($primaryFile));
 
 $inStock = (int) $product['stock'] >= 1;
 ?>

@@ -17,3 +17,8 @@ public/uploads/products/*
 !writable/backups/.gitkeep
 !public/uploads/products/.gitkeep
 !public/uploads/products/default-product.svg
+
+# IDE / editor workspace files
+*.code-workspace
+.idea/
+.vscode/

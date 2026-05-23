@@ -1,42 +1,21 @@
 <?php
-/**
- * Logic for Primary and Secondary (Hover) images
- */
-$primaryImage = base_url('uploads/products/' . esc($product['image'] ?: 'default-product.svg'));
-$secondaryImage = !empty($product['image_secondary']) 
-    ? base_url('uploads/products/' . esc($product['image_secondary'])) 
-    : '';
-
-// Refined Fallback Logic: Always provide a secondary image if empty
-if (empty($secondaryImage)) {
-    $name = strtolower($product['name']);
-    
-    // Default fallback pairs from Unsplash
-    if (strpos($name, 'keyboard') !== false) {
-        if ($product['image'] === 'default-product.svg' || empty($product['image'])) {
-            $primaryImage = 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=800&auto=format&fit=crop';
-        }
-        $secondaryImage = 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=800&auto=format&fit=crop';
-    } elseif (strpos($name, 'mouse') !== false) {
-        if ($product['image'] === 'default-product.svg' || empty($product['image'])) {
-            $primaryImage = 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=800&auto=format&fit=crop';
-        }
-        $secondaryImage = 'https://images.unsplash.com/photo-1617325247661-6750456102d9?q=80&w=800&auto=format&fit=crop';
-    } elseif (strpos($name, 'headset') !== false || strpos($name, 'audio') !== false) {
-        if ($product['image'] === 'default-product.svg' || empty($product['image'])) {
-            $primaryImage = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop';
-        }
-        $secondaryImage = 'https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=800&auto=format&fit=crop';
-    } else {
-        if ($product['image'] === 'default-product.svg' || empty($product['image'])) {
-            $primaryImage = 'https://images.unsplash.com/photo-1603481546238-487240415921?q=80&w=800&auto=format&fit=crop';
-        }
-        $secondaryImage = 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=800&auto=format&fit=crop';
-    }
+$primaryFile = trim((string) ($product['image'] ?? ''));
+if ($primaryFile === '' || ! is_file(FCPATH . 'uploads/products/' . $primaryFile)) {
+    $primaryFile = 'default-product.svg';
 }
+
+$secondaryFile = trim((string) ($product['image_secondary'] ?? ''));
+if ($secondaryFile !== '' && ! is_file(FCPATH . 'uploads/products/' . $secondaryFile)) {
+    $secondaryFile = '';
+}
+
+$primaryImage = base_url('uploads/products/' . rawurlencode($primaryFile));
+$secondaryImage = $secondaryFile !== ''
+    ? base_url('uploads/products/' . rawurlencode($secondaryFile))
+    : '';
 ?>
 
-<article class="product-card or-card-elevated h-100 d-flex flex-column border-0">
+<article class="product-card<?= $secondaryImage ? ' has-secondary' : '' ?> or-card-elevated h-100 d-flex flex-column border-0">
     <!-- Image Area -->
     <div class="product-media-shell position-relative">
         <a href="<?= base_url('/products/' . $product['id']) ?>" class="d-block product-media-container position-relative overflow-hidden">

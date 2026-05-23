@@ -1,22 +1,57 @@
 Options -Indexes
 
+# ── Block sensitive files ───────────────────────────────────
+# Belt-and-braces: even though these live outside public/, prevent any
+# accidental routing exposure if Apache is misconfigured.
+<FilesMatch "(^\.|^composer\.(json|lock)$|^package(-lock)?\.json$|^phpunit\.xml$|\.(env|env\..*|sql|md|lock|log|bak|swp|orig)$)">
+    Require all denied
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     Options +FollowSymlinks
     RewriteEngine On
 
+    # Force HTTPS (skip on local hosts)
     RewriteCond %{HTTPS} !=on
     RewriteCond %{HTTP_HOST} !^localhost [NC]
     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+    # Pretty URLs — route everything through index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
 
+    # Preserve Authorization header for API-style requests
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>
 
 <IfModule !mod_rewrite.c>
     ErrorDocument 404 index.php
+</IfModule>
+
+# ── Security headers ────────────────────────────────────────
+# CodeIgniter's secureheaders filter sets most of these per-response, but
+# ship them via Apache too as a defense-in-depth fallback. The filter wins
+# when both are present.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HSTS — only meaningful over HTTPS. 1-year max-age, preload-eligible.
+    # Comment out the line below if you don't yet serve every subdomain over TLS.
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+    # PWA assets should not be aggressively cached at the proxy layer
+    <FilesMatch "(manifest\.webmanifest|service-worker\.js)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ── MIME safety ─────────────────────────────────────────────
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
 </IfModule>

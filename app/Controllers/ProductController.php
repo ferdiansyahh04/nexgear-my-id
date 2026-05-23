@@ -24,17 +24,7 @@ class ProductController extends BaseController
         $model = new ProductModel();
 
         if ($q !== '') {
-            if (strlen($q) >= 3) {
-                // Use FULLTEXT search for better performance (requires ft_products_search index)
-                $escaped = $model->db->escape($q);
-                $model->where("MATCH(name, description) AGAINST({$escaped} IN BOOLEAN MODE)", null, false);
-            } else {
-                // Fallback to LIKE for very short queries (below MySQL ft_min_word_len)
-                $model->groupStart()
-                    ->like('name', $q)
-                    ->orLike('description', $q)
-                    ->groupEnd();
-            }
+            $this->applySearch($model, $q);
         }
 
         if ($categoryId > 0) {
@@ -321,11 +311,16 @@ class ProductController extends BaseController
 
         $model = new ProductModel();
 
-        if (mb_strlen($q) >= 3) {
-            $escaped = $model->db->escape($q);
-            $model->where("MATCH(name, description) AGAINST({$escaped} IN BOOLEAN MODE)", null, false);
+        if (mb_strlen($q) >= 2) {
+            $this->applySearch($model, $q);
         } else {
-            $model->groupStart()->like('name', $q)->orLike('description', $q)->groupEnd();
+            // Treat single-char as no-op so we don't return the entire catalogue.
+            return $this->response->setJSON([
+                'status'   => 'success',
+                'query'    => $q,
+                'results'  => [],
+                'trending' => $logModel->trending(6),
+            ]);
         }
 
         $rows = $model->orderBy('stock', 'DESC')->limit(8)->find();
@@ -353,5 +348,65 @@ class ProductController extends BaseController
             'results'  => $results,
             'trending' => [],
         ]);
+    }
+
+    /**
+     * Apply a robust storefront search to a ProductModel query builder.
+     *
+     * Strategy:
+     *  • Tokenize input on whitespace.
+     *  • For each token ≥3 chars with ASCII word characters only, use a
+     *    BOOLEAN MODE FULLTEXT clause with a `+token*` prefix wildcard so
+     *    "icar" matches "Icarus" and "PAW33" matches "PAW3395".
+     *  • For short tokens (<3) or tokens with hyphens / non-word characters,
+     *    fall back to LIKE on name + description.
+     *  • The combined per-token clauses are AND-ed together so the result set
+     *    is intersected (every keyword must appear).
+     *
+     * Falls back gracefully when the FULLTEXT index is missing — the LIKE
+     * branch alone still produces correct (if slower) results.
+     */
+    private function applySearch(ProductModel $model, string $q): void
+    {
+        $tokens = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($tokens === []) {
+            return;
+        }
+
+        $db = $model->db;
+
+        foreach ($tokens as $token) {
+            $clean = trim($token);
+            if ($clean === '') {
+                continue;
+            }
+
+            $isFulltextSafe = mb_strlen($clean) >= 3
+                && preg_match('/^[A-Za-z0-9]+$/', $clean) === 1;
+
+            $model->groupStart();
+
+            if ($isFulltextSafe) {
+                // Prefix wildcard so partial typed words still match.
+                $escaped = $db->escape('+' . $clean . '*');
+                $model->where(
+                    "MATCH(name, description) AGAINST({$escaped} IN BOOLEAN MODE)",
+                    null,
+                    false
+                );
+                // OR fall through to LIKE in case FULLTEXT is unavailable
+                // (e.g., MyISAM-only indexes on legacy MariaDB) — guarantees
+                // the row still surfaces.
+                $model->orLike('name', $clean);
+                $model->orLike('description', $clean);
+            } else {
+                // Hyphenated SKUs, model numbers with mixed punctuation, or
+                // sub-3-character tokens — LIKE is the safer fallback.
+                $model->like('name', $clean);
+                $model->orLike('description', $clean);
+            }
+
+            $model->groupEnd();
+        }
     }
 }

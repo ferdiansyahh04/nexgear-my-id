@@ -1,0 +1,36 @@
+# Defense-in-depth — even though our admin upload validator (is_image,
+# mime_in, max_size) only accepts image MIME types and getRandomName()
+# strips the original extension, never let Apache hand server-side
+# scripts off to PHP from inside this directory.
+#
+# 1. Disable PHP and other interpreters outright.
+# 2. Force a safe default Content-Type for unknown handlers.
+# 3. Disable directory indexing.
+
+Options -Indexes -ExecCGI
+
+<FilesMatch "\.(?i:phtml|php|php3|php4|php5|php7|phps|pl|py|jsp|asp|aspx|cgi|sh|bash|exe)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Kill any inline handler associations Apache may have inherited from
+# parent configs so .php inside an image is treated as static text.
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .phps
+AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .phps
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

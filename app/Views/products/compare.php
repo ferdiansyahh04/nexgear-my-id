@@ -32,7 +32,11 @@
             <!-- Header row: empty corner + each product card -->
             <div class="compare-corner"></div>
             <?php foreach ($products as $product):
-                $img = base_url('uploads/products/' . esc($product['image'] ?: 'default-product.svg'));
+                $imageFile = trim((string) ($product['image'] ?? ''));
+                if ($imageFile === '' || ! is_file(FCPATH . 'uploads/products/' . $imageFile)) {
+                    $imageFile = 'default-product.svg';
+                }
+                $img = base_url('uploads/products/' . rawurlencode($imageFile));
             ?>
                 <div class="compare-product-cell">
                     <button type="button" class="compare-remove" data-compare-remove="<?= (int) $product['id'] ?>"
@@ -40,8 +44,7 @@
                         <i class="bi bi-x-lg"></i>
                     </button>
                     <a href="<?= base_url('/products/' . (int) $product['id']) ?>" class="compare-thumb">
-                        <img src="<?= $img ?>" alt="<?= esc($product['name']) ?>" loading="lazy"
-                             onerror="this.src='https://images.unsplash.com/photo-1603481546238-487240415921?q=80&w=400&auto=format&fit=crop'">
+                        <img src="<?= $img ?>" alt="<?= esc($product['name']) ?>" loading="lazy">
                     </a>
                     <h3 class="compare-product-name">
                         <a href="<?= base_url('/products/' . (int) $product['id']) ?>"><?= esc($product['name']) ?></a>

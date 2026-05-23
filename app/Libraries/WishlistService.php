@@ -15,10 +15,14 @@ class WishlistService
     private const GUEST_KEY = 'guest_wishlist';
 
     /**
-     * Toggle a product. Returns the new state ('added' | 'removed').
+     * Toggle a product. Returns the new state ('added' | 'removed' | 'invalid').
      */
     public function toggle(int $productId): string
     {
+        if (! (new ProductModel())->find($productId)) {
+            return 'invalid';
+        }
+
         $userId = (int) (session('user_id') ?? 0);
 
         if ($userId > 0) {
@@ -107,8 +111,17 @@ class WishlistService
         $list = $this->guestList();
         if ($list === [] || $userId < 1) return;
 
+        $validIds = array_map(
+            static fn ($row) => (int) $row['id'],
+            (new ProductModel())->select('id')->whereIn('id', $list)->findAll()
+        );
+        if ($validIds === []) {
+            session()->remove(self::GUEST_KEY);
+            return;
+        }
+
         $model = new WishlistModel();
-        foreach ($list as $productId) {
+        foreach ($validIds as $productId) {
             $exists = $model->where(['user_id' => $userId, 'product_id' => $productId])->countAllResults();
             if (! $exists) {
                 $model->insert(['user_id' => $userId, 'product_id' => $productId]);

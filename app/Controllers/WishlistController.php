@@ -31,6 +31,21 @@ class WishlistController extends BaseController
     public function toggle(int $productId)
     {
         $state = $this->wishlist->toggle($productId);
+        if ($state === 'invalid') {
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode(404)->setJSON([
+                    'status'    => 'error',
+                    'state'     => $state,
+                    'count'     => $this->wishlist->count(),
+                    'productId' => $productId,
+                    'message'   => 'Product not found.',
+                    'csrfName'  => csrf_token(),
+                    'csrfToken' => csrf_hash(),
+                ]);
+            }
+
+            return redirect()->back()->with('error', 'Product not found.');
+        }
 
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([

@@ -57,6 +57,10 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Lists allowed scripts' URLs.
      *
+     * Inline scripts must carry the {csp-script-nonce} placeholder — see
+     * the layout/partials. We deliberately do NOT include 'unsafe-inline'
+     * here; the autoNonce machinery below substitutes a per-request nonce.
+     *
      * @var list<string>|string
      */
     public $scriptSrc = ['self', 'cdn.jsdelivr.net', 'unpkg.com'];
@@ -72,9 +76,15 @@ class ContentSecurityPolicy extends BaseConfig
      * Specifies valid sources for JavaScript inline event
      * handlers and JavaScript URLs.
      *
+     * NOTE: 'unsafe-inline' is intentionally allowed here for inline event
+     * handlers like onclick="return confirm(...)" which are scattered
+     * through admin views. Inline event handlers are a much narrower XSS
+     * surface than full <script> tags. A future cleanup pass should move
+     * these to delegated listeners in app.js so we can drop this allowance.
+     *
      * @var list<string>|string
      */
-    public array|string $scriptSrcAttr = 'self';
+    public array|string $scriptSrcAttr = ['self', 'unsafe-inline'];
 
     /**
      * Lists allowed stylesheets' URLs.
@@ -96,14 +106,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public array|string $styleSrcAttr = 'self';
+    public array|string $styleSrcAttr = ['self', 'unsafe-inline'];
 
     /**
      * Defines the origins from which images can be loaded.
      *
      * @var list<string>|string
      */
-    public $imageSrc = ['self', 'data:', 'images.unsplash.com'];
+    public $imageSrc = ['self', 'data:', 'https:', 'images.unsplash.com'];
 
     /**
      * Restricts the URLs that can appear in a page's `<base>` element.

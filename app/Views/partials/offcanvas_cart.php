@@ -33,7 +33,11 @@ $couponCode = (new \App\Libraries\CouponService())->applied();
                     $product  = $item['product'];
                     $qty      = (int) $item['qty'];
                     $stock    = (int) $product['stock'];
-                    $image    = base_url('uploads/products/' . esc($product['image'] ?: 'default-product.svg'));
+                    $imageFile = trim((string) ($product['image'] ?? ''));
+                    if ($imageFile === '' || ! is_file(FCPATH . 'uploads/products/' . $imageFile)) {
+                        $imageFile = 'default-product.svg';
+                    }
+                    $image = base_url('uploads/products/' . rawurlencode($imageFile));
                 ?>
                     <div class="cart-item border-bottom border-dark border-opacity-10 py-3 d-flex align-items-center"
                          data-product-id="<?= (int) $product['id'] ?>"

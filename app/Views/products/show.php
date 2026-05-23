@@ -4,57 +4,30 @@
 <?php
 /**
  * Build a small gallery from primary + secondary images, then any
- * extra images saved in product_images, with curated Unsplash
- * fallbacks when the product still uses the SVG default.
+ * extra images saved in product_images. Missing upload files fall back to
+ * the local SVG placeholder so product pages do not depend on external media.
  */
 function nexgear_show_gallery(array $product, array $extras = []): array
 {
-    $name      = strtolower($product['name']);
-    $primary   = $product['image'] && $product['image'] !== 'default-product.svg'
-        ? base_url('uploads/products/' . esc($product['image']))
-        : null;
-    $secondary = !empty($product['image_secondary'])
-        ? base_url('uploads/products/' . esc($product['image_secondary']))
-        : null;
+    $toUrl = static function (?string $file): ?string {
+        $file = trim((string) $file);
+        if ($file === '') return null;
+        if (! is_file(FCPATH . 'uploads/products/' . $file)) return null;
+        return base_url('uploads/products/' . rawurlencode($file));
+    };
 
-    if (!$primary) {
-        if (str_contains($name, 'keyboard')) {
-            $primary   = 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=1200&auto=format&fit=crop';
-        } elseif (str_contains($name, 'mouse')) {
-            $primary   = 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1617325247661-6750456102d9?q=80&w=1200&auto=format&fit=crop';
-        } elseif (str_contains($name, 'headset') || str_contains($name, 'audio')) {
-            $primary   = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=1200&auto=format&fit=crop';
-        } elseif (str_contains($name, 'mic') || str_contains($name, 'stream')) {
-            $primary   = 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1583394838336-acd977730f8a?q=80&w=1200&auto=format&fit=crop';
-        } elseif (str_contains($name, 'pad') || str_contains($name, 'mat')) {
-            $primary   = 'https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1603481546238-487240415921?q=80&w=1200&auto=format&fit=crop';
-        } else {
-            $primary   = 'https://images.unsplash.com/photo-1603481546238-487240415921?q=80&w=1200&auto=format&fit=crop';
-            $secondary = $secondary ?? 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=1200&auto=format&fit=crop';
-        }
-    }
+    $primary = $toUrl($product['image'] ?? null) ?? base_url('uploads/products/default-product.svg');
+    $secondary = $toUrl($product['image_secondary'] ?? null);
 
     $gallery = [$primary];
-    if ($secondary) $gallery[] = $secondary;
-    foreach ($extras as $img) {
-        $gallery[] = base_url('uploads/products/' . esc($img['path']));
+    if ($secondary !== null) {
+        $gallery[] = $secondary;
     }
 
-    // Pad to at least 4 thumbnails for a fuller layout
-    if (count($gallery) < 4) {
-        $detailShots = [
-            'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1541140532154-b024d705b90a?q=80&w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=800&auto=format&fit=crop',
-        ];
-        foreach ($detailShots as $shot) {
-            if (count($gallery) >= 4) break;
-            if (! in_array($shot, $gallery, true)) $gallery[] = $shot;
+    foreach ($extras as $img) {
+        $extra = $toUrl($img['path'] ?? null);
+        if ($extra !== null) {
+            $gallery[] = $extra;
         }
     }
 
