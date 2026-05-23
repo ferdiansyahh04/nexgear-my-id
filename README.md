@@ -237,8 +237,8 @@ Add to crontab (`crontab -e -u www-data`):
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@nexgear.test` | `password` |
-| Customer | `user@nexgear.test` | `password` |
+| Admin | `admin@nexgear.my.id` | `password` |
+| Customer | `user@nexgear.my.id` | `password` |
 
 **Change these immediately on any non-local environment.**
 

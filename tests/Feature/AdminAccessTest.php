@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature;
 
@@ -22,7 +22,7 @@ class AdminAccessTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 999,
-            'user_email'   => 'staff@nexgear.test',
+            'user_email'   => 'staff@nexgear.my.id',
             'user_name'    => 'Staff',
             'role'         => 'staff',
             'is_logged_in' => true,
@@ -36,7 +36,7 @@ class AdminAccessTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 999,
-            'user_email'   => 'staff@nexgear.test',
+            'user_email'   => 'staff@nexgear.my.id',
             'user_name'    => 'Staff',
             'role'         => 'staff',
             'is_logged_in' => true,
@@ -51,7 +51,7 @@ class AdminAccessTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 1000,
-            'user_email'   => 'user@nexgear.test',
+            'user_email'   => 'user@nexgear.my.id',
             'user_name'    => 'User',
             'role'         => 'user',
             'is_logged_in' => true,

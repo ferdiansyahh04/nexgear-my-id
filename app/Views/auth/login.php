@@ -38,8 +38,8 @@
         <div class="demo-info">
             <p class="small text-secondary mb-2 fw-bold"><i class="bi bi-info-circle me-1"></i> Demo Accounts:</p>
             <div class="d-flex flex-column gap-1 small">
-                <code class="text-primary-light">Admin: admin@nexgear.test / password</code>
-                <code class="text-primary-light">User: user@nexgear.test / password</code>
+                <code class="text-primary-light">Admin: admin@nexgear.my.id / password</code>
+                <code class="text-primary-light">User: user@nexgear.my.id / password</code>
             </div>
         </div>
         <?php endif; ?>

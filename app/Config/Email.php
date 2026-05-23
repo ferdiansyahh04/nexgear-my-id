@@ -10,7 +10,7 @@ use CodeIgniter\Config\BaseConfig;
  * Set in your .env (example for Mailtrap dev sandbox):
  *
  *   email.protocol      = smtp
- *   email.fromEmail     = no-reply@nexgear.test
+ *   email.fromEmail     = no-reply@nexgear.my.id
  *   email.fromName      = NexGear Store
  *   email.SMTPHost      = sandbox.smtp.mailtrap.io
  *   email.SMTPUser      = xxxxxxxxxxxx
@@ -23,7 +23,7 @@ use CodeIgniter\Config\BaseConfig;
  */
 class Email extends BaseConfig
 {
-    public string $fromEmail  = 'no-reply@nexgear.test';
+    public string $fromEmail  = 'no-reply@nexgear.my.id';
     public string $fromName   = 'NexGear Store';
     public string $recipients = '';
 

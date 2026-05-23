@@ -86,9 +86,9 @@ php spark check:login
 Expected output:
 
 ```
-Email: admin@nexgear.test
+Email: admin@nexgear.my.id
   password_verify('password', hash): TRUE
-Email: user@nexgear.test
+Email: user@nexgear.my.id
   password_verify('password', hash): TRUE
 ```
 
@@ -106,8 +106,8 @@ php spark serve
 
 Open <http://localhost:8080>. Default credentials:
 
-- **Admin** — `admin@nexgear.test` / `password`
-- **User** — `user@nexgear.test` / `password`
+- **Admin** — `admin@nexgear.my.id` / `password`
+- **User** — `user@nexgear.my.id` / `password`
 
 ## Test setup
 

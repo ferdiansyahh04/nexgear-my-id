@@ -16,7 +16,7 @@
         </div>
         <div class="col-md-4">
             <label class="font-serif text-muted small text-uppercase mb-2 d-block italic" style="letter-spacing: 0.1em;">Actor (email or label)</label>
-            <input type="text" name="actor" value="<?= esc($actor) ?>" class="form-control admin-input" placeholder="admin@nexgear.test">
+            <input type="text" name="actor" value="<?= esc($actor) ?>" class="form-control admin-input" placeholder="admin@nexgear.my.id">
         </div>
         <div class="col-md-4">
             <button type="submit" class="btn btn-dark py-2 px-4 rounded-0 text-uppercase fw-bold me-1"

@@ -18,7 +18,7 @@ class CheckLogin extends BaseCommand
     public function run(array $params)
     {
         $db     = \Config\Database::connect();
-        $emails = ['admin@nexgear.test', 'user@nexgear.test'];
+        $emails = ['admin@nexgear.my.id', 'user@nexgear.my.id'];
 
         foreach ($emails as $email) {
             $row = $db->table('users')->where('email', $email)->get()->getRowArray();

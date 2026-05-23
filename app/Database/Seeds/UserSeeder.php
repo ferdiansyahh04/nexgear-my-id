@@ -11,7 +11,7 @@ class UserSeeder extends Seeder
         $data = [
             [
                 'name'       => 'Admin NexGear',
-                'email'      => 'admin@nexgear.test',
+                'email'      => 'admin@nexgear.my.id',
                 'password'   => password_hash('password', PASSWORD_DEFAULT),
                 'role'       => 'admin',
                 'created_at' => date('Y-m-d H:i:s'),
@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name'       => 'Demo User',
-                'email'      => 'user@nexgear.test',
+                'email'      => 'user@nexgear.my.id',
                 'password'   => password_hash('password', PASSWORD_DEFAULT),
                 'role'       => 'user',
                 'created_at' => date('Y-m-d H:i:s'),

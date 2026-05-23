@@ -299,8 +299,8 @@ INSERT INTO coupons (code, type, value, min_total, max_uses, used, expires_at, c
 ('NEXGEAR50K',  'fixed',   50000, 500000,      100, 0, NULL, NOW(), NOW());
 
 INSERT INTO users (name, email, password, role, created_at, updated_at) VALUES
-('Admin NexGear', 'admin@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'admin', NOW(), NOW()),
-('Demo User', 'user@nexgear.test', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'user', NOW(), NOW());
+('Admin NexGear', 'admin@nexgear.my.id', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'admin', NOW(), NOW()),
+('Demo User', 'user@nexgear.my.id', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC1fRmtn3MowM9ATQeJe', 'user', NOW(), NOW());
 
 INSERT INTO products (name, description, category_id, price, stock, image, created_at, updated_at) VALUES
 ('Nebula K87 Mechanical Keyboard', 'Compact hot-swappable keyboard with RGB lighting and tactile switches.',  1, 899000, 14, 'default-product.svg', NOW(), NOW()),

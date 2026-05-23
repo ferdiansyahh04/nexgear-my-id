@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature;
 
@@ -7,7 +7,7 @@ use CodeIgniter\Test\FeatureTestTrait;
 
 /**
  * Smoke test for the admin dashboard. The dashboard runs ~8 aggregate
- * queries on app load — this test catches Model-API mistakes (e.g.
+ * queries on app load â€” this test catches Model-API mistakes (e.g.
  * accidentally calling Query-Builder-only methods like whereNull()).
  */
 class AdminDashboardTest extends CIUnitTestCase
@@ -18,7 +18,7 @@ class AdminDashboardTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 1,
-            'user_email'   => 'admin@nexgear.test',
+            'user_email'   => 'admin@nexgear.my.id',
             'user_name'    => 'Admin',
             'role'         => 'admin',
             'is_logged_in' => true,
@@ -32,7 +32,7 @@ class AdminDashboardTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 2,
-            'user_email'   => 'staff@nexgear.test',
+            'user_email'   => 'staff@nexgear.my.id',
             'user_name'    => 'Staff',
             'role'         => 'staff',
             'is_logged_in' => true,
@@ -46,7 +46,7 @@ class AdminDashboardTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 1,
-            'user_email'   => 'admin@nexgear.test',
+            'user_email'   => 'admin@nexgear.my.id',
             'user_name'    => 'Admin',
             'role'         => 'admin',
             'is_logged_in' => true,
@@ -60,7 +60,7 @@ class AdminDashboardTest extends CIUnitTestCase
     {
         session()->set([
             'user_id'      => 1,
-            'user_email'   => 'admin@nexgear.test',
+            'user_email'   => 'admin@nexgear.my.id',
             'user_name'    => 'Admin',
             'role'         => 'admin',
             'is_logged_in' => true,

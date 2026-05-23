@@ -23,8 +23,8 @@ class FixSeedUsers extends BaseCommand
 
         // Accounts to ensure: email => [password, role, name]
         $accounts = [
-            'admin@nexgear.test' => ['admin123', 'admin', 'Admin NexGear'],
-            'user@nexgear.test'  => ['password', 'user',  'Demo User'],
+            'admin@nexgear.my.id' => ['admin123', 'admin', 'Admin NexGear'],
+            'user@nexgear.my.id'  => ['password', 'user',  'Demo User'],
         ];
 
         foreach ($accounts as $email => [$plain, $role, $name]) {
@@ -65,7 +65,7 @@ class FixSeedUsers extends BaseCommand
 
         CLI::newLine();
         CLI::write('Login credentials are now:', 'green');
-        CLI::write('  admin@nexgear.test / admin123');
-        CLI::write('  user@nexgear.test  / password');
+        CLI::write('  admin@nexgear.my.id / admin123');
+        CLI::write('  user@nexgear.my.id  / password');
     }
 }
