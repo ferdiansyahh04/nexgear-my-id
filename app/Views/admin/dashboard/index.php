@@ -225,7 +225,7 @@ function _rp_compact(float $n): string {
 
 <!-- Chart.js — load only on dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script nonce="{csp-script-nonce}">
+<script {csp-script-nonce}>
 (function () {
     const ctx = document.getElementById('revenueChart');
     if (!ctx || typeof Chart === 'undefined') return;

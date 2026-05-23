@@ -191,7 +191,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <script nonce="{csp-script-nonce}">
+    <script {csp-script-nonce}>
         AOS.init({ duration: 600, once: true, easing: 'ease-out-cubic' });
 
         // A13 — Animated stat counters (count up when scrolled into view)

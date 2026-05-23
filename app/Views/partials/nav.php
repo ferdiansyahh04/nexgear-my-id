@@ -120,7 +120,7 @@
 }
 </style>
 
-<script nonce="{csp-script-nonce}">
+<script {csp-script-nonce}>
 document.addEventListener('DOMContentLoaded', function() {
     var nav = document.getElementById('mainNavbar');
     var menuToggleBtn = document.getElementById('menuToggleText');

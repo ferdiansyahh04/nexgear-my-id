@@ -22,7 +22,7 @@ $extra   = $extra   ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= esc($title) ?> | NexGear Store</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
-    <script nonce="{csp-script-nonce}">
+    <script {csp-script-nonce}>
         (function() {
             try {
                 var saved = localStorage.getItem('nexgear_theme');

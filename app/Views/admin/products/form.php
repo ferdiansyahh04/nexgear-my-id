@@ -146,7 +146,7 @@
 </div>
 
 
-<script nonce="{csp-script-nonce}">
+<script {csp-script-nonce}>
     document.getElementById('productImageInput').onchange = evt => {
         const [file] = evt.target.files;
         if (file) {

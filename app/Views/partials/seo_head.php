@@ -60,9 +60,9 @@ $canonical = current_url();
         ];
     }
 ?>
-<script type="application/ld+json" nonce="{csp-script-nonce}"><?= json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/ld+json" {csp-script-nonce}><?= json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 <?php else: ?>
-<script type="application/ld+json" nonce="{csp-script-nonce}"><?= json_encode([
+<script type="application/ld+json" {csp-script-nonce}><?= json_encode([
     '@context' => 'https://schema.org/',
     '@type'    => 'WebSite',
     'name'     => 'NexGear Store',

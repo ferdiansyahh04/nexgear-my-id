@@ -23,7 +23,7 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <meta name="<?= csrf_token() ?>" content="<?= csrf_hash() ?>" id="csrf-token">
     <!-- A15: Set theme as early as possible to avoid FOUC -->
-    <script nonce="{csp-script-nonce}">
+    <script {csp-script-nonce}>
         (function() {
             try {
                 var saved = localStorage.getItem('nexgear_theme');
@@ -101,7 +101,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script nonce="{csp-script-nonce}">AOS.init({ duration: 800, once: true, easing: 'ease-out-cubic' });</script>
+    <script {csp-script-nonce}>AOS.init({ duration: 800, once: true, easing: 'ease-out-cubic' });</script>
     <script src="<?= base_url('assets/js/app.js') ?>"></script>
 </body>
 </html>
