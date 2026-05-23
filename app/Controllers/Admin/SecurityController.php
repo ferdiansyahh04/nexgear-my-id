@@ -102,6 +102,61 @@ class SecurityController extends BaseController
         return redirect()->to('/admin/security')->with('success', 'Two-factor authentication disabled.');
     }
 
+    /**
+     * Change the signed-in user's password.
+     *
+     * Flow:
+     *  1. Validate input (current + new + confirm)
+     *  2. Verify current password against bcrypt hash
+     *  3. Re-hash with PASSWORD_DEFAULT and persist
+     *  4. Audit log (no plaintext, just a marker)
+     *  5. Re-issue session ID to invalidate any captured cookies
+     */
+    public function changePassword()
+    {
+        $rules = [
+            'current_password'     => 'required',
+            'new_password'         => 'required|min_length[8]|max_length[128]',
+            'new_password_confirm' => 'required|matches[new_password]',
+        ];
+
+        if (! $this->validate($rules)) {
+            return redirect()->to('/admin/security')
+                ->withInput()
+                ->with('errors', $this->validator->getErrors());
+        }
+
+        $user = $this->currentUser();
+        if ((int) ($user['id'] ?? 0) === 0) {
+            return redirect()->to('/login')->with('error', 'Session expired.');
+        }
+
+        $current = (string) $this->request->getPost('current_password');
+        $new     = (string) $this->request->getPost('new_password');
+
+        if (! password_verify($current, (string) $user['password'])) {
+            return redirect()->to('/admin/security')->with('error', 'Current password is incorrect.');
+        }
+
+        if (password_verify($new, (string) $user['password'])) {
+            return redirect()->to('/admin/security')->with('error', 'New password must differ from the current one.');
+        }
+
+        (new UserModel())->update($user['id'], [
+            'password' => password_hash($new, PASSWORD_DEFAULT),
+        ]);
+
+        (new AuditLogService())->log('security.password_changed', [
+            'target_type' => 'user',
+            'target_id'   => (int) $user['id'],
+        ]);
+
+        // Re-issue session id so any leaked session cookie is invalidated.
+        session()->regenerate(true);
+
+        return redirect()->to('/admin/security')->with('success', 'Password updated. Use the new one next time you sign in.');
+    }
+
     private function currentUser(): array
     {
         $user = (new UserModel())->find((int) session('user_id'));

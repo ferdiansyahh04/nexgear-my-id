@@ -97,6 +97,60 @@ $enabled = (int) ($user['totp_enabled'] ?? 0) === 1;
                 </form>
             <?php endif; ?>
         </div>
+
+        <!-- ── Change Password ─────────────────────────────────────── -->
+        <div class="admin-table-wrap p-4 p-lg-5 mt-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                <div>
+                    <h2 class="h4 m-0" style="font-family: 'Space Grotesk', sans-serif; font-weight: 700;">Change Password</h2>
+                    <p class="text-muted font-serif italic mt-2 mb-0" style="font-size: 0.95rem;">
+                        Use a unique passphrase you don't reuse anywhere else. Minimum 8 characters.
+                    </p>
+                </div>
+            </div>
+
+            <form action="<?= site_url('/admin/security/password') ?>" method="post" autocomplete="off">
+                <?= csrf_field() ?>
+
+                <div class="mb-3">
+                    <label class="text-uppercase fw-bold d-block mb-2" for="current_password"
+                           style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; letter-spacing: 0.15em;">
+                        Current Password
+                    </label>
+                    <input type="password" id="current_password" name="current_password" class="filter-price-input w-100"
+                           required autocomplete="current-password"
+                           style="font-family: 'Space Grotesk', sans-serif;">
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-uppercase fw-bold d-block mb-2" for="new_password"
+                           style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; letter-spacing: 0.15em;">
+                        New Password
+                    </label>
+                    <input type="password" id="new_password" name="new_password" class="filter-price-input w-100"
+                           required minlength="8" maxlength="128" autocomplete="new-password"
+                           style="font-family: 'Space Grotesk', sans-serif;">
+                    <p class="text-muted font-serif italic mb-0 mt-1" style="font-size: 0.8rem;">
+                        At least 8 characters. Mix letters, numbers, and a symbol if you can.
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-uppercase fw-bold d-block mb-2" for="new_password_confirm"
+                           style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; letter-spacing: 0.15em;">
+                        Confirm New Password
+                    </label>
+                    <input type="password" id="new_password_confirm" name="new_password_confirm" class="filter-price-input w-100"
+                           required minlength="8" maxlength="128" autocomplete="new-password"
+                           style="font-family: 'Space Grotesk', sans-serif;">
+                </div>
+
+                <button type="submit" class="btn btn-dark px-4 py-2 rounded-0 text-uppercase fw-bold"
+                        style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; letter-spacing: 0.1em;">
+                    Update Password
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="col-lg-5">

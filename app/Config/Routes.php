@@ -96,6 +96,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => 'st
     $routes->post('security/setup/start', 'SecurityController::setupStart');
     $routes->post('security/setup/confirm', 'SecurityController::setupConfirm');
     $routes->post('security/disable', 'SecurityController::disable');
+    $routes->post('security/password', 'SecurityController::changePassword', ['filter' => 'throttle']);
 
     // Messages — staff can read & change status
     $routes->get('messages', 'MessageController::index');
