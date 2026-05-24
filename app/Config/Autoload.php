@@ -12,5 +12,5 @@ class Autoload extends AutoloadConfig
 
     public $classmap = [];
     public $files = [];
-    public $helpers = ['url', 'form', 'number', 'text'];
+    public $helpers = ['url', 'form', 'number', 'text', 'asset'];
 }
