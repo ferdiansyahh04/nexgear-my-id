@@ -45,7 +45,15 @@ Options -Indexes
     # Comment out the line below if you don't yet serve every subdomain over TLS.
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 
-    # PWA assets should not be aggressively cached at the proxy layer
+    # Versioned static assets (asset_url() helper appends ?v=<hash>) can be
+    # cached aggressively — the URL changes whenever the file changes, so
+    # there's no risk of staleness.
+    <FilesMatch "\.(css|js|jpg|jpeg|png|gif|webp|svg|ico|woff2?|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # PWA assets must NOT be aggressively cached — they govern install state
+    # and offline shell. Override the generic rule above for these specifics.
     <FilesMatch "(manifest\.webmanifest|service-worker\.js)$">
         Header set Cache-Control "no-cache, must-revalidate"
     </FilesMatch>
