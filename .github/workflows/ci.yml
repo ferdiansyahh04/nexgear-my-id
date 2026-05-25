@@ -60,6 +60,13 @@ jobs:
           mysql -h 127.0.0.1 -u root -proot nexgear_test < database/nexgear_store.sql
 
       - name: Run PHPUnit tests
+        env:
+          database.tests.hostname: 127.0.0.1
+          database.tests.username: root
+          database.tests.password: root
+          database.tests.database: nexgear_test
+          database.tests.DBDriver: MySQLi
+          database.tests.port: 3306
         run: vendor/bin/phpunit --testdox
 
   deploy:

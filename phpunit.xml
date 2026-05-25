@@ -25,13 +25,13 @@
         <env name="CI_ENVIRONMENT" value="testing"/>
 
         <!-- The Database config swaps to the `tests` group automatically when
-             CI_ENVIRONMENT === 'testing'. Override defaults via env if your
-             local test DB lives elsewhere. -->
-        <env name="database.tests.hostname" value="127.0.0.1"/>
-        <env name="database.tests.username" value="root"/>
-        <env name="database.tests.password" value=""/>
-        <env name="database.tests.database" value="nexgear_test"/>
-        <env name="database.tests.DBDriver" value="MySQLi"/>
-        <env name="database.tests.port"     value="3306"/>
+             CI_ENVIRONMENT === 'testing'. Override defaults via real env vars
+             (or this XML when running locally without env). -->
+        <env name="database.tests.hostname" value="127.0.0.1" force="false"/>
+        <env name="database.tests.username" value="root"      force="false"/>
+        <env name="database.tests.password" value=""          force="false"/>
+        <env name="database.tests.database" value="nexgear_test" force="false"/>
+        <env name="database.tests.DBDriver" value="MySQLi"    force="false"/>
+        <env name="database.tests.port"     value="3306"      force="false"/>
     </php>
 </phpunit>
