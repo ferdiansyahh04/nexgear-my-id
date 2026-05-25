@@ -23,6 +23,11 @@ class SeoController extends BaseController
         $urls[] = ['loc' => $base . '/login',       'priority' => '0.3', 'changefreq' => 'yearly'];
         $urls[] = ['loc' => $base . '/register',    'priority' => '0.3', 'changefreq' => 'yearly'];
         $urls[] = ['loc' => $base . '/contact',     'priority' => '0.4', 'changefreq' => 'monthly'];
+        $urls[] = ['loc' => $base . '/help',        'priority' => '0.5', 'changefreq' => 'monthly'];
+        $urls[] = ['loc' => $base . '/privacy',     'priority' => '0.3', 'changefreq' => 'yearly'];
+        $urls[] = ['loc' => $base . '/terms',       'priority' => '0.3', 'changefreq' => 'yearly'];
+        $urls[] = ['loc' => $base . '/refund-policy',   'priority' => '0.3', 'changefreq' => 'yearly'];
+        $urls[] = ['loc' => $base . '/shipping-policy', 'priority' => '0.3', 'changefreq' => 'yearly'];
 
         $categories = (new CategoryModel())->orderBy('sort_order', 'ASC')->findAll();
         foreach ($categories as $cat) {

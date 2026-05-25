@@ -67,10 +67,10 @@
             <div class="col-md-3 mb-4 mb-md-0">
                 <h4 class="text-uppercase fw-bold pb-3 mb-3 border-bottom border-dark" style="font-size: 0.7rem; letter-spacing: 0.15em; font-family: 'Space Grotesk', sans-serif;">Legal</h4>
                 <ul class="list-unstyled">
-                    <li class="mb-2"><a href="#" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Privacy Policy</a></li>
-                    <li class="mb-2"><a href="#" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Refunds</a></li>
-                    <li class="mb-2"><a href="#" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Shipping</a></li>
-                    <li class="mb-2"><a href="#" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Terms of Service</a></li>
+                    <li class="mb-2"><a href="<?= base_url('/privacy') ?>" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Privacy Policy</a></li>
+                    <li class="mb-2"><a href="<?= base_url('/refund-policy') ?>" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Refunds</a></li>
+                    <li class="mb-2"><a href="<?= base_url('/shipping-policy') ?>" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Shipping</a></li>
+                    <li class="mb-2"><a href="<?= base_url('/terms') ?>" class="text-dark text-decoration-none text-uppercase" style="font-size: 0.8rem; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.05em;">Terms of Service</a></li>
                 </ul>
             </div>
         </div>

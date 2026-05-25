@@ -23,6 +23,12 @@ $routes->get('robots.txt', 'SeoController::robots');
 // Help / FAQ
 $routes->get('help', 'HelpController::index');
 
+// Legal pages
+$routes->get('privacy', 'LegalController::privacy');
+$routes->get('terms', 'LegalController::terms');
+$routes->get('refund-policy', 'LegalController::refund');
+$routes->get('shipping-policy', 'LegalController::shipping');
+
 $routes->get('register', 'AuthController::registerForm');
 $routes->post('register', 'AuthController::register', ['filter' => 'throttle']);
 $routes->get('login', 'AuthController::loginForm');
