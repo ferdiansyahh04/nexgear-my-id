@@ -55,7 +55,13 @@ jobs:
       - name: Verify SSH key secret format (no key value leaked)
         env:
           KEY: ${{ secrets.VPS_SSH_KEY }}
+          HOST: ${{ secrets.VPS_HOST }}
+          PORT: ${{ secrets.VPS_SSH_PORT }}
+          USER: ${{ secrets.VPS_USER }}
         run: |
+          echo "HOST set: $([ -n "$HOST" ] && echo yes || echo no)"
+          echo "PORT set: $([ -n "$PORT" ] && echo yes || echo no) (value: '$PORT')"
+          echo "USER set: $([ -n "$USER" ] && echo yes || echo no)"
           if [ -z "$KEY" ]; then
             echo "::error::VPS_SSH_KEY secret is empty"; exit 1
           fi
@@ -85,7 +91,10 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.VPS_SSH_PORT }}
+          # Coerce port to int — secrets are always strings, drone-ssh sometimes
+          # silently falls back to 22 if it can't parse. Default 2278 keeps us
+          # safe even if VPS_SSH_PORT is missing/typo'd.
+          port: ${{ secrets.VPS_SSH_PORT || '2278' }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script_stop: true
