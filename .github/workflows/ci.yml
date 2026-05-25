@@ -34,7 +34,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, intl, mysqli, pdo_mysql
+          extensions: mbstring, intl, mysqli, pdo_mysql, gd
           coverage: none
 
       - name: Cache Composer packages
@@ -50,9 +50,9 @@ jobs:
       - name: Setup environment
         run: |
           cp .env.example .env
-          sed -i 's/CI_ENVIRONMENT = development/CI_ENVIRONMENT = testing/' .env
-          sed -i 's/database.default.database = nexgear_store/database.default.database = nexgear_test/' .env
-          sed -i 's/database.default.password =/database.default.password = root/' .env
+          sed -i 's|^CI_ENVIRONMENT.*|CI_ENVIRONMENT = testing|' .env
+          sed -i 's|^database.default.database.*|database.default.database = nexgear_test|' .env
+          sed -i 's|^database.default.password.*|database.default.password = root|' .env
 
       - name: Provision test database
         run: |
@@ -63,24 +63,49 @@ jobs:
         run: vendor/bin/phpunit --testdox
 
   deploy:
-    name: Deploy to VPS
+    name: Deploy to production VPS
     needs: lint-and-test
     runs-on: ubuntu-latest
+    # Only deploy on direct push to main (not PRs).
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - uses: actions/checkout@v4
+    concurrency:
+      # Serialise deploys so two pushes in a row don't race each other.
+      group: deploy-production
+      cancel-in-progress: false
 
+    steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_SSH_PORT }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
           script: |
-            cd /var/www/nexgear-store
-            git pull origin main
-            composer install --no-dev --optimize-autoloader
-            php spark migrate
-            php spark cache:clear
-            sudo systemctl reload php8.1-fpm
+            set -euo pipefail
+            APP_DIR=/var/www/nexgear-store
+
+            echo '=== Pulling latest commit ==='
+            cd "$APP_DIR"
+            sudo -u www-data git fetch --quiet origin main
+            sudo -u www-data git reset --hard origin/main
+
+            echo '=== Installing composer dependencies (production) ==='
+            sudo -u www-data \
+              COMPOSER_ALLOW_SUPERUSER=1 \
+              composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
+
+            echo '=== Clearing app cache ==='
+            sudo -u www-data php spark cache:clear
+
+            echo '=== Reloading PHP-FPM (zero-downtime, picks up opcache reset) ==='
+            systemctl reload php8.3-fpm
+
+            echo '=== Sanity check ==='
+            HTTP_CODE=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 https://nexgear.my.id/login || echo 000)
+            if [ "$HTTP_CODE" != "200" ]; then
+                echo "WARN: /login returned $HTTP_CODE (expected 200)"
+                exit 1
+            fi
+            echo "[OK] /login returned $HTTP_CODE — deploy successful"
