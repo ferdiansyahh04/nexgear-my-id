@@ -52,53 +52,16 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - name: Verify SSH key secret format (no key value leaked)
-        env:
-          KEY: ${{ secrets.VPS_SSH_KEY }}
-          HOST: ${{ secrets.VPS_HOST }}
-          PORT: ${{ secrets.VPS_SSH_PORT }}
-          USER: ${{ secrets.VPS_USER }}
-        run: |
-          echo "HOST set: $([ -n "$HOST" ] && echo yes || echo no)"
-          echo "PORT set: $([ -n "$PORT" ] && echo yes || echo no) (value: '$PORT')"
-          echo "USER set: $([ -n "$USER" ] && echo yes || echo no)"
-          if [ -z "$KEY" ]; then
-            echo "::error::VPS_SSH_KEY secret is empty"; exit 1
-          fi
-          echo "Key length: ${#KEY} chars"
-          echo "First line: $(echo "$KEY" | head -1)"
-          echo "Last line: $(echo "$KEY" | tail -1)"
-          echo "Line count: $(echo "$KEY" | wc -l)"
-          # Check for Windows line endings (CRLF)
-          if echo "$KEY" | head -1 | grep -q $'\r'; then
-            echo "::error::Key has Windows-style CRLF line endings — re-paste from a Unix-friendly editor"
-            exit 1
-          fi
-          # Try fingerprinting it (writes to a tmp file then ssh-keygen -lf)
-          TMP=$(mktemp)
-          printf '%s\n' "$KEY" > "$TMP"
-          chmod 600 "$TMP"
-          if ssh-keygen -lf "$TMP" 2>&1; then
-            echo '[OK] Key parses correctly'
-          else
-            echo '::error::Key cannot be parsed by ssh-keygen — likely truncated or malformed'
-            cat "$TMP" | head -3
-            exit 1
-          fi
-          rm -f "$TMP"
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
-          # Coerce port to int — secrets are always strings, drone-ssh sometimes
-          # silently falls back to 22 if it can't parse. Default 2278 keeps us
-          # safe even if VPS_SSH_PORT is missing/typo'd.
+          # Default to 2278 if VPS_SSH_PORT secret is missing/empty — drone-ssh
+          # silently falls back to 22 otherwise, which would i/o-timeout.
           port: ${{ secrets.VPS_SSH_PORT || '2278' }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script_stop: true
-          debug: true
           script: |
             set -euo pipefail
             APP_DIR=/var/www/nexgear-store
