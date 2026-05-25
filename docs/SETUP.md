@@ -6,7 +6,7 @@ This is the deeper companion to the README's **Installation** section. Use it wh
 
 | Tool | Version | Notes |
 |---|---|---|
-| PHP | 8.1.0 or higher | Tested on 8.1, 8.2, 8.3 |
+| PHP | 8.2.0 or higher | Tested on 8.2, 8.3 |
 | MySQL or MariaDB | MySQL 8 / MariaDB 10.4+ | utf8mb4 throughout |
 | Composer | 2.x | We don't need 1.x compat |
 | Node.js | **not required** | Frontend has no build step |

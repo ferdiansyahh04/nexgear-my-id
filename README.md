@@ -70,7 +70,7 @@ nexgear-store/
 
 | Tool | Minimum | Tested on | Notes |
 |---|---|---|---|
-| PHP | 8.1 | 8.1, 8.2, 8.3 | Extensions: `intl`, `mbstring`, `gd`, `mysqli`, `curl`, `json` |
+| PHP | 8.2 | 8.2, 8.3 | Extensions: `intl`, `mbstring`, `gd`, `mysqli`, `curl`, `json` |
 | MySQL/MariaDB | MySQL 5.7 / MariaDB 10.4 | MySQL 8.0 | utf8mb4 throughout, FULLTEXT search uses InnoDB |
 | Composer | 2.x | 2.7+ | |
 | Node.js | not required | — | No frontend build step |
