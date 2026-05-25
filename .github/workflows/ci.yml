@@ -52,6 +52,35 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      - name: Verify SSH key secret format (no key value leaked)
+        env:
+          KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::VPS_SSH_KEY secret is empty"; exit 1
+          fi
+          echo "Key length: ${#KEY} chars"
+          echo "First line: $(echo "$KEY" | head -1)"
+          echo "Last line: $(echo "$KEY" | tail -1)"
+          echo "Line count: $(echo "$KEY" | wc -l)"
+          # Check for Windows line endings (CRLF)
+          if echo "$KEY" | head -1 | grep -q $'\r'; then
+            echo "::error::Key has Windows-style CRLF line endings — re-paste from a Unix-friendly editor"
+            exit 1
+          fi
+          # Try fingerprinting it (writes to a tmp file then ssh-keygen -lf)
+          TMP=$(mktemp)
+          printf '%s\n' "$KEY" > "$TMP"
+          chmod 600 "$TMP"
+          if ssh-keygen -lf "$TMP" 2>&1; then
+            echo '[OK] Key parses correctly'
+          else
+            echo '::error::Key cannot be parsed by ssh-keygen — likely truncated or malformed'
+            cat "$TMP" | head -3
+            exit 1
+          fi
+          rm -f "$TMP"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
