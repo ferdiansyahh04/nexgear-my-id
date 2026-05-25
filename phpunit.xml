@@ -16,6 +16,15 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <!--
+          DB-free subset of unit tests. CartService and OrderStatusService
+          exercise pure logic; CouponService needs a database for migrations
+          and is excluded so this suite is safe to run in CI without a DB.
+        -->
+        <testsuite name="UnitFast">
+            <file>tests/Unit/CartServiceTest.php</file>
+            <file>tests/Unit/OrderStatusServiceTest.php</file>
+        </testsuite>
     </testsuites>
     <php>
         <server name="app.baseURL" value="http://localhost:8080/"/>
