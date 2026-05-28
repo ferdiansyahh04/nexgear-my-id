@@ -97,12 +97,18 @@ class ProductController extends BaseController
             'categories' => $categories,
         ]);
 
-        // Cache only the unfiltered listing
-        $isUnfiltered = $q === '' && $filters['min_price'] === null && $filters['max_price'] === null
-            && $filters['stock'] === '' && $sortKey === 'newest' && $filters['category'] === 0;
-        if ($isUnfiltered && ENVIRONMENT === 'production') {
-            $this->cachePage(300);
-        }
+        // NOTE: We previously called $this->cachePage(300) for the unfiltered
+        // listing. The CodeIgniter ResponseCache keys responses purely by
+        // method + URI, *not* by request headers — so a cached HTML response
+        // for `GET /collection` would be served back to a subsequent AJAX
+        // request to the same URL, bypassing the AJAX→JSON branch above.
+        // The result on production was an HTML body returned for an AJAX
+        // request → JSON.parse() throws → "Network error while filtering"
+        // toast on every category-chip click after an unfiltered pageload.
+        // Storefront listings are cheap (one paginated query + view render),
+        // and Cloudflare already proxies the public unfiltered URL well
+        // enough that a server-side page cache adds little value. Removing
+        // it eliminates the AJAX/HTML conflation entirely.
 
         return $response;
     }
@@ -118,7 +124,9 @@ class ProductController extends BaseController
         // Track this view BEFORE caching consideration so the strip stays fresh
         (new RecentlyViewedService())->track($id);
 
-        // Cache product detail pages for 10 minutes
+        // Cache product detail pages for 10 minutes. Safe here because the
+        // companion AJAX endpoints (/products/{id}/stock, /products/{id}/quick-view)
+        // live on different URLs, so the URL-only cache key can't conflate them.
         if (ENVIRONMENT === 'production') {
             $this->cachePage(600);
         }
