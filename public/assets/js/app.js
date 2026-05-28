@@ -624,12 +624,18 @@
     const productsGrid = document.getElementById('productsGrid');
     const productsPagerWrap = document.getElementById('productsPagerWrap');
     const gridSkeletonOverlay = document.getElementById('gridSkeletonOverlay');
+    // The category quick-chip strip lives OUTSIDE #filterForm for layout
+    // reasons, so we have to track it separately and replicate the active
+    // state across both surfaces (strip + sort/stock chips inside the panel).
+    const categoryStrip = document.querySelector('.category-strip');
 
     function setFilterChip(name, value) {
         if (!filterForm) return;
         const hidden = filterForm.querySelector(`input[type="hidden"][name="${name}"]`);
         if (hidden) hidden.value = value;
-        filterForm.querySelectorAll(`.filter-chip[data-filter-name="${name}"]`).forEach((chip) => {
+        // Sync chips wherever they live: inside the panel form and on the
+        // category quick-strip above the grid.
+        document.querySelectorAll(`.filter-chip[data-filter-name="${name}"]`).forEach((chip) => {
             chip.classList.toggle('is-active', chip.getAttribute('data-filter-value') === value);
         });
     }
@@ -723,11 +729,26 @@
                 else h.value = '';
             });
             filterForm.querySelectorAll('.filter-price-input').forEach((i) => (i.value = ''));
-            filterForm.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('is-active'));
+            // Clear active state on every chip — including the category strip.
+            document.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('is-active'));
             const newest = filterForm.querySelector('.filter-chip[data-filter-name="sort"][data-filter-value="newest"]');
             const allStock = filterForm.querySelector('.filter-chip[data-filter-name="stock"][data-filter-value=""]');
+            const allCategory = document.querySelector('.filter-chip[data-filter-name="category"][data-filter-value="0"]');
             if (newest) newest.classList.add('is-active');
             if (allStock) allStock.classList.add('is-active');
+            if (allCategory) allCategory.classList.add('is-active');
+            runFilter();
+        });
+    }
+
+    // Category quick-strip lives outside #filterForm but mutates the same
+    // hidden `category` input, so wire its clicks here.
+    if (categoryStrip && filterForm) {
+        categoryStrip.addEventListener('click', (e) => {
+            const chip = e.target.closest('.filter-chip[data-filter-name="category"]');
+            if (!chip) return;
+            const value = chip.getAttribute('data-filter-value') || '0';
+            setFilterChip('category', value);
             runFilter();
         });
     }
@@ -754,7 +775,8 @@
         filterForm.querySelectorAll('.filter-price-input').forEach((i) => {
             i.value = params.get(i.name) || '';
         });
-        filterForm.querySelectorAll('.filter-chip').forEach((c) => {
+        // Sync chip active state across the form AND the standalone category strip.
+        document.querySelectorAll('.filter-chip').forEach((c) => {
             const n = c.getAttribute('data-filter-name');
             const v = c.getAttribute('data-filter-value');
             const current = (filterForm.querySelector(`input[type="hidden"][name="${n}"]`) || {}).value || '';
