@@ -129,7 +129,7 @@ $categories = $categories ?? [];
 
 <div class="container-fluid px-4 px-lg-5 py-4 d-flex justify-content-center" id="productsPagerWrap">
     <?php if ($pager->getPageCount() > 1): ?>
-        <?= $pager->links('default', 'default_full') ?>
+        <?= $pager->links('default', 'nexgear') ?>
     <?php endif; ?>
 </div>
 

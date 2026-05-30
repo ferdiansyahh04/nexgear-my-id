@@ -5542,3 +5542,99 @@ details[open] > summary::before {
 @media (max-width: 991px) {
     .chart-shell { height: 260px; }
 }
+
+/*
+  =========================================
+  COLLECTION PAGER (editorial)
+  Squared, uppercase Space-Grotesk treatment that replaces the stock
+  Bootstrap numeric pager on /collection. Mirrors .filter-chip styling.
+  =========================================
+*/
+.nexgear-pager {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.nexgear-pager-list {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.nexgear-pager-link,
+.nexgear-pager-edge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 0;
+}
+
+.nexgear-pager-link:hover,
+.nexgear-pager-edge:not(.is-disabled):hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary);
+}
+
+.nexgear-pager-link.is-active {
+    background: #000;
+    color: #fff;
+    cursor: default;
+}
+
+.nexgear-pager-edge.is-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.nexgear-pager-arrow {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+/* On small screens the Prev/Next word labels are dropped to keep the row tidy. */
+@media (max-width: 575px) {
+    .nexgear-pager-edge-label {
+        display: none;
+    }
+    .nexgear-pager-edge {
+        min-width: 40px;
+        padding: 0;
+    }
+}
+
+/* Dark mode — mirror the .filter-chip dark overrides. */
+[data-theme="dark"] .nexgear-pager-link,
+[data-theme="dark"] .nexgear-pager-edge {
+    border-color: #3a3a3a;
+    color: #f5f5f5;
+}
+[data-theme="dark"] .nexgear-pager-link:hover,
+[data-theme="dark"] .nexgear-pager-edge:not(.is-disabled):hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .nexgear-pager-link.is-active {
+    background: #f5f5f5;
+    color: #000;
+    border-color: #f5f5f5;
+}

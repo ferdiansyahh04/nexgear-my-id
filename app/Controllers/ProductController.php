@@ -83,7 +83,7 @@ class ProductController extends BaseController
                     'products' => $products,
                 ]),
                 'pagerHtml' => $model->pager->getPageCount() > 1
-                    ? $model->pager->links('default', 'default_full')
+                    ? $model->pager->links('default', 'nexgear')
                     : '',
             ]);
         }
