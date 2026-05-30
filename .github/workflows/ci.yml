@@ -82,6 +82,11 @@ jobs:
             # populates the etalase from the JSON shipped in the repo.
             sudo -u www-data php spark etalase:import-noirgear || echo "WARN: import-noirgear exited non-zero — continuing"
 
+            echo '=== Importing Linsoul catalogue (in-ear monitors) ==='
+            # Same idempotent upsert-by-name pattern. Populates the headsets
+            # category with curated IEMs from the JSON shipped in the repo.
+            sudo -u www-data php spark etalase:import-linsoul || echo "WARN: import-linsoul exited non-zero — continuing"
+
             echo '=== Clearing app cache (after import so stale listings get evicted) ==='
             # The unfiltered storefront listing is page-cached for 5 minutes
             # (ProductController::index). If we cleared the cache before the

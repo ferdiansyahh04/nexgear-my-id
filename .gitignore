@@ -18,6 +18,11 @@ public/uploads/products/*
 !public/uploads/products/.gitkeep
 !public/uploads/products/default-product.svg
 
+# Transient Shopify feed snapshots used by scripts/build_*_data.php
+products.json
+linsoul_all.json
+linsoul_mic.json
+
 # IDE / editor workspace files
 *.code-workspace
 .idea/
