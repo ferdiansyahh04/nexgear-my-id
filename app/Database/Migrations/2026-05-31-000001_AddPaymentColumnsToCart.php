@@ -5,9 +5,11 @@ namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 
 /**
- * Adds payment-tracking columns to the cart/order table for the Midtrans Snap
- * integration. The order lifecycle status (checked_out → paid → …) already
- * exists; these columns track the gateway-side payment state alongside it.
+ * Adds payment-tracking columns to the cart/order table for the online
+ * payment integration. The order lifecycle status (checked_out → paid → …)
+ * already exists; these columns track the gateway-side payment state alongside
+ * it. (The gateway is Duitku Pop; an earlier revision named the token column
+ * snap_token — a follow-up migration renames it to payment_token.)
  */
 class AddPaymentColumnsToCart extends Migration
 {
@@ -22,15 +24,17 @@ class AddPaymentColumnsToCart extends Migration
                 'default'    => 'unpaid', // unpaid | pending | paid | failed | expired | refunded
                 'after'      => 'discount',
             ],
-            // The unique order_id sent to Midtrans (e.g. NEXGEAR-12-20260531...).
+            // The unique merchantOrderId we send to the gateway (e.g.
+            // NEXGEAR-12-1700000000); the callback echoes it back.
             'payment_ref' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 64,
                 'null'       => true,
                 'after'      => 'payment_status',
             ],
-            // The most recent Snap token (so a payment page can be reopened).
-            'snap_token' => [
+            // The most recent gateway payment token / reference (so a payment
+            // page can be reopened). For Duitku this holds the `reference`.
+            'payment_token' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
                 'null'       => true,
@@ -41,7 +45,7 @@ class AddPaymentColumnsToCart extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 50,
                 'null'       => true,
-                'after'      => 'snap_token',
+                'after'      => 'payment_token',
             ],
             'paid_at' => [
                 'type'  => 'DATETIME',
@@ -58,6 +62,6 @@ class AddPaymentColumnsToCart extends Migration
     public function down()
     {
         $this->db->query('DROP INDEX idx_cart_payment_ref ON cart');
-        $this->forge->dropColumn('cart', ['payment_status', 'payment_ref', 'snap_token', 'payment_method', 'paid_at']);
+        $this->forge->dropColumn('cart', ['payment_status', 'payment_ref', 'payment_token', 'payment_method', 'paid_at']);
     }
 }

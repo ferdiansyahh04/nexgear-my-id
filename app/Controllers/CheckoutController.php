@@ -160,10 +160,10 @@ class CheckoutController extends BaseController
         $couponSvc->clear();
         (new \App\Libraries\AbandonedCartService())->clearForUser((int) session('user_id'));
 
-        // When Midtrans is configured, send the customer to the payment step.
+        // When Duitku is configured, send the customer to the payment step.
         // Otherwise fall back to the legacy "order saved, pay offline" flow so
         // the store keeps working without gateway keys.
-        if ((new \App\Libraries\MidtransService())->isEnabled()) {
+        if ((new \App\Libraries\DuitkuService())->isEnabled()) {
             return redirect()->to('/checkout/pay/' . $cartId);
         }
 
@@ -172,13 +172,13 @@ class CheckoutController extends BaseController
     }
 
     /**
-     * Payment step — shows the Snap "Pay Now" page for an unpaid order the
-     * current user owns. Only reachable when Midtrans is configured.
+     * Payment step — shows the Duitku Pop "Pay Now" page for an unpaid order
+     * the current user owns. Only reachable when Duitku is configured.
      */
     public function pay(int $orderId)
     {
-        $midtrans = new \App\Libraries\MidtransService();
-        if (! $midtrans->isEnabled()) {
+        $duitku = new \App\Libraries\DuitkuService();
+        if (! $duitku->isEnabled()) {
             return redirect()->to('/account/orders/' . $orderId);
         }
 
@@ -193,10 +193,9 @@ class CheckoutController extends BaseController
         }
 
         return view('checkout/pay', [
-            'title'     => 'Complete Payment',
-            'order'     => $order,
-            'snapJsUrl' => $midtrans->snapJsUrl(),
-            'clientKey' => $midtrans->clientKey(),
+            'title'    => 'Complete Payment',
+            'order'    => $order,
+            'popJsUrl' => $duitku->popJsUrl(),
         ]);
     }
 }

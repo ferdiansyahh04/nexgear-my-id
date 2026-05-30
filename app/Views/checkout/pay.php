@@ -19,7 +19,7 @@
             <h2 class="mb-1" style="font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; text-transform: uppercase;">
                 Rp <?= number_format((float) $order['total'], 0, ',', '.') ?>
             </h2>
-            <p class="text-muted font-serif italic mb-0">Secure payment powered by Midtrans.</p>
+            <p class="text-muted font-serif italic mb-0">Secure payment powered by Duitku.</p>
         </div>
 
         <button type="button" id="payNowBtn"
@@ -31,13 +31,13 @@
         </button>
 
         <p class="text-center text-muted small mt-4 mb-0 font-serif italic" id="payHint">
-            <i class="bi bi-lock-fill me-1"></i> You can pay with bank transfer, e-wallet, QRIS, or card.
+            <i class="bi bi-lock-fill me-1"></i> Pay with bank transfer, e-wallet, QRIS, retail, or card.
         </p>
     </div>
 </section>
 
-<!-- Midtrans Snap loader — client key is public by design -->
-<script src="<?= esc($snapJsUrl, 'attr') ?>" data-client-key="<?= esc($clientKey, 'attr') ?>"></script>
+<!-- Duitku Pop loader -->
+<script src="<?= esc($popJsUrl, 'attr') ?>"></script>
 <script {csp-script-nonce}>
 (function () {
     var btn = document.getElementById('payNowBtn');
@@ -48,15 +48,17 @@
     var csrfName = csrfMeta ? csrfMeta.getAttribute('name') : null;
     var csrfHash = csrfMeta ? csrfMeta.getAttribute('content') : null;
 
+    var orderId = btn.getAttribute('data-order-id');
+    var ordersBase = '<?= base_url('/account/orders') ?>';
+
     btn.addEventListener('click', function () {
-        var orderId = btn.getAttribute('data-order-id');
         btn.disabled = true;
         hint.textContent = 'Preparing secure payment…';
 
         var form = new FormData();
         if (csrfName && csrfHash) form.append(csrfName, csrfHash);
 
-        fetch('<?= base_url('/payment/snap') ?>/' + orderId, {
+        fetch('<?= base_url('/payment/invoice') ?>/' + orderId, {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: form
@@ -64,17 +66,21 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.status === 'already_paid') {
-                window.location.href = '<?= base_url('/account/orders') ?>/' + orderId;
+                window.location.href = ordersBase + '/' + orderId;
                 return;
             }
-            if (data.status !== 'success' || !data.token || !window.snap) {
+            if (data.status !== 'success' || !data.reference || typeof checkout === 'undefined') {
                 throw new Error(data.message || 'Could not start payment.');
             }
-            window.snap.pay(data.token, {
-                onSuccess: function () { window.location.href = '<?= base_url('/payment/finish') ?>?order=' + orderId; },
-                onPending: function () { window.location.href = '<?= base_url('/account/orders') ?>/' + orderId; },
-                onError:   function () { window.location.href = '<?= base_url('/payment/error') ?>?order=' + orderId; },
-                onClose:   function () {
+            checkout.process(data.reference, {
+                defaultLanguage: 'id',
+                successEvent: function () { window.location.href = ordersBase + '/' + orderId; },
+                pendingEvent: function () { window.location.href = ordersBase + '/' + orderId; },
+                errorEvent:   function () {
+                    btn.disabled = false;
+                    hint.textContent = 'Payment error. Please try again or use another method.';
+                },
+                closeEvent:   function () {
                     btn.disabled = false;
                     hint.textContent = 'Payment window closed. You can try again anytime.';
                 }

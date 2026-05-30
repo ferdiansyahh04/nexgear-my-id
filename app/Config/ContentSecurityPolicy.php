@@ -63,14 +63,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $scriptSrc = ['self', 'cdn.jsdelivr.net', 'unpkg.com', 'app.sandbox.midtrans.com', 'app.midtrans.com'];
+    public $scriptSrc = ['self', 'cdn.jsdelivr.net', 'unpkg.com', 'app-sandbox.duitku.com', 'app-prod.duitku.com'];
 
     /**
      * Specifies valid sources for JavaScript <script> elements.
      *
      * @var list<string>|string
      */
-    public array|string $scriptSrcElem = ['self', 'cdn.jsdelivr.net', 'unpkg.com', 'app.sandbox.midtrans.com', 'app.midtrans.com'];
+    public array|string $scriptSrcElem = ['self', 'cdn.jsdelivr.net', 'unpkg.com', 'app-sandbox.duitku.com', 'app-prod.duitku.com'];
 
     /**
      * Specifies valid sources for JavaScript inline event
@@ -137,7 +137,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $connectSrc = ['self', 'fonts.googleapis.com', 'fonts.gstatic.com', 'api.sandbox.midtrans.com', 'api.midtrans.com', 'app.sandbox.midtrans.com', 'app.midtrans.com'];
+    public $connectSrc = ['self', 'fonts.googleapis.com', 'fonts.gstatic.com', 'api-sandbox.duitku.com', 'api-prod.duitku.com', 'app-sandbox.duitku.com', 'app-prod.duitku.com'];
 
     /**
      * Specifies the origins that can serve web fonts.
@@ -167,12 +167,12 @@ class ContentSecurityPolicy extends BaseConfig
      * The frame-src directive restricts the URLs which may
      * be loaded into nested browsing contexts.
      *
-     * Midtrans Snap renders its payment UI inside an iframe served from
-     * these origins.
+     * Duitku Pop renders its payment UI inside an iframe served from these
+     * origins.
      *
      * @var list<string>|string|null
      */
-    public $frameSrc = ['self', 'app.sandbox.midtrans.com', 'app.midtrans.com'];
+    public $frameSrc = ['self', 'app-sandbox.duitku.com', 'app-prod.duitku.com'];
 
     /**
      * Restricts the origins allowed to deliver video and audio.

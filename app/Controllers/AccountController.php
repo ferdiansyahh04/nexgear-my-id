@@ -136,7 +136,7 @@ class AccountController extends BaseController
             'items'           => $items,
             'statusMap'       => OrderStatusService::labels(),
             'timeline'        => OrderStatusService::timelineFor($order['status']),
-            'paymentsEnabled' => (new \App\Libraries\MidtransService())->isEnabled(),
+            'paymentsEnabled' => (new \App\Libraries\DuitkuService())->isEnabled(),
         ]);
     }
 

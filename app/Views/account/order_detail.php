@@ -133,7 +133,7 @@ $status = $statusMap[$order['status']] ?? ['label' => ucfirst($order['status']),
                         <span>→</span>
                     </a>
                     <p class="text-center text-muted small mt-3 mb-0 font-serif italic">
-                        <i class="bi bi-lock-fill me-1"></i> Secure payment via Midtrans
+                        <i class="bi bi-lock-fill me-1"></i> Secure payment via Duitku
                     </p>
                 <?php elseif ($payStatus === 'paid' && ! empty($order['paid_at'])): ?>
                     <p class="text-muted small mb-0 font-serif italic">

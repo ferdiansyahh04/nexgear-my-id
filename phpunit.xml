@@ -24,7 +24,7 @@
         <testsuite name="UnitFast">
             <file>tests/Unit/CartServiceTest.php</file>
             <file>tests/Unit/OrderStatusServiceTest.php</file>
-            <file>tests/Unit/MidtransServiceTest.php</file>
+            <file>tests/Unit/DuitkuServiceTest.php</file>
         </testsuite>
     </testsuites>
     <php>

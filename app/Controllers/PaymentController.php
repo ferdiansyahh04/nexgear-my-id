@@ -2,33 +2,31 @@
 
 namespace App\Controllers;
 
-use App\Libraries\MidtransService;
+use App\Libraries\DuitkuService;
 use App\Models\CartItemModel;
 use App\Models\CartModel;
 use App\Models\ProductModel;
 
 /**
- * Midtrans Snap payment flow.
+ * Duitku Pop payment flow.
  *
- *   POST /payment/snap/(:num)   — (auth) create/return a Snap token for an order
- *   POST /payment/notification  — Midtrans server-to-server webhook (no CSRF)
- *   GET  /payment/finish        — redirect target after a successful pay
- *   GET  /payment/unfinish      — redirect target when the user backs out
- *   GET  /payment/error         — redirect target on a failed pay
+ *   POST /payment/invoice/(:num) — (auth) create/return a Duitku reference for an order
+ *   POST /payment/callback       — Duitku server-to-server callback (no CSRF)
+ *   GET  /payment/return         — browser redirect target after Pop closes
  *
- * The webhook is the source of truth for marking an order paid; the browser
- * redirects are cosmetic (the user can close the tab before they fire).
+ * The callback is the source of truth for marking an order paid; the browser
+ * return is cosmetic (the user can close the tab before it fires).
  */
 class PaymentController extends BaseController
 {
     /**
-     * Create (or reuse) a Snap token for an order the current user owns.
-     * Returns JSON { token, clientKey } for the front-end snap.pay() call.
+     * Create (or refresh) a Duitku invoice for an order the current user owns.
+     * Returns JSON { reference } for the front-end checkout.process() call.
      */
-    public function snap(int $orderId)
+    public function invoice(int $orderId)
     {
-        $midtrans = new MidtransService();
-        if (! $midtrans->isEnabled()) {
+        $duitku = new DuitkuService();
+        if (! $duitku->isEnabled()) {
             return $this->response->setStatusCode(503)->setJSON([
                 'status'  => 'error',
                 'message' => 'Online payment is not available right now.',
@@ -45,55 +43,59 @@ class PaymentController extends BaseController
             ]);
         }
         if (($order['payment_status'] ?? 'unpaid') === 'paid') {
-            return $this->response->setJSON([
-                'status' => 'already_paid',
-            ]);
+            return $this->response->setJSON(['status' => 'already_paid']);
         }
 
-        // A fresh, unique order_id is required by Midtrans for each new Snap
-        // token. We namespace by cart id + timestamp so retries never collide.
-        $paymentRef = 'NEXGEAR-' . $orderId . '-' . time();
+        // A fresh, unique merchantOrderId is required for each new invoice.
+        // We namespace by cart id + timestamp so retries never collide, and
+        // store it on the order so the callback can find us.
+        $merchantOrderId = 'NEXGEAR-' . $orderId . '-' . time();
 
-        $items = (new CartItemModel())->where('cart_id', $orderId)->findAll();
+        $items        = (new CartItemModel())->where('cart_id', $orderId)->findAll();
         $productModel = new ProductModel();
         $itemDetails  = [];
         foreach ($items as $line) {
             $product = $productModel->find((int) $line['product_id']);
             $itemDetails[] = [
-                'id'       => (string) $line['product_id'],
+                'name'     => mb_substr((string) ($product['name'] ?? 'Item'), 0, 50),
                 'price'    => (int) round((float) $line['price']),
                 'quantity' => (int) $line['quantity'],
-                'name'     => mb_substr((string) ($product['name'] ?? 'Item'), 0, 50),
             ];
         }
 
-        // Represent the coupon discount as a negative line so the item total
-        // reconciles with gross_amount (Midtrans rejects mismatches).
+        // Represent the coupon discount as a negative line so the item totals
+        // reconcile with paymentAmount (Duitku requires the sum to match).
         $discount = (int) round((float) ($order['discount'] ?? 0));
         if ($discount > 0) {
             $itemDetails[] = [
-                'id'       => 'DISCOUNT',
+                'name'     => mb_substr('Discount' . ($order['coupon_code'] ? ' (' . $order['coupon_code'] . ')' : ''), 0, 50),
                 'price'    => -$discount,
                 'quantity' => 1,
-                'name'     => 'Discount' . ($order['coupon_code'] ? ' (' . $order['coupon_code'] . ')' : ''),
             ];
         }
 
-        $grossAmount = (int) round((float) $order['total']);
+        $paymentAmount = (int) round((float) $order['total']);
 
         try {
-            $snap = $midtrans->createTransaction(
-                ['order_id' => $paymentRef, 'gross_amount' => $grossAmount],
+            $invoice = $duitku->createInvoice(
                 [
-                    'first_name' => (string) ($order['shipping_name'] ?: session('user_name')),
-                    'email'      => (string) (session('user_email') ?? ''),
-                    'phone'      => (string) ($order['shipping_phone'] ?? ''),
+                    'merchantOrderId' => $merchantOrderId,
+                    'paymentAmount'   => $paymentAmount,
+                    'productDetails'  => 'NexGear Order #' . $orderId,
+                ],
+                [
+                    'name'  => (string) ($order['shipping_name'] ?: session('user_name')),
+                    'email' => (string) (session('user_email') ?? ''),
+                    'phone' => (string) ($order['shipping_phone'] ?? ''),
                 ],
                 $itemDetails,
-                ['finish' => base_url('/payment/finish?order=' . $orderId)]
+                [
+                    'callbackUrl' => base_url('/payment/callback'),
+                    'returnUrl'   => base_url('/payment/return?order=' . $orderId),
+                ]
             );
         } catch (\Throwable $e) {
-            log_message('error', 'Snap token creation failed: {msg}', ['msg' => $e->getMessage()]);
+            log_message('error', 'Duitku invoice creation failed: {msg}', ['msg' => $e->getMessage()]);
             return $this->response->setStatusCode(502)->setJSON([
                 'status'  => 'error',
                 'message' => 'Could not start the payment. Please try again.',
@@ -101,47 +103,46 @@ class PaymentController extends BaseController
         }
 
         $orderModel->update($orderId, [
-            'payment_ref'    => $paymentRef,
-            'snap_token'     => $snap['token'],
+            'payment_ref'    => $merchantOrderId,
+            'payment_token'  => $invoice['reference'], // stores the Duitku reference
             'payment_status' => 'pending',
         ]);
 
         return $this->response->setJSON([
-            'status'    => 'success',
-            'token'     => $snap['token'],
-            'clientKey' => $midtrans->clientKey(),
+            'status'     => 'success',
+            'reference'  => $invoice['reference'],
+            'paymentUrl' => $invoice['paymentUrl'],
         ]);
     }
 
     /**
-     * Midtrans server-to-server webhook. Verifies the signature, then updates
-     * the order's payment + lifecycle status idempotently.
+     * Duitku server-to-server callback. Verifies the HMAC signature, then
+     * updates the order's payment + lifecycle status idempotently.
      */
-    public function notification()
+    public function callback()
     {
-        $midtrans = new MidtransService();
-        $body     = $this->request->getJSON(true);
-        if (! is_array($body)) {
-            $body = $this->request->getPost();
+        $duitku = new DuitkuService();
+        $body   = $this->request->getPost();
+
+        if (! $duitku->isEnabled() || ! $duitku->verifyCallback($body)) {
+            log_message('warning', 'Rejected Duitku callback (bad signature or disabled).');
+            return $this->response->setStatusCode(400)->setBody('Invalid signature');
         }
 
-        if (! $midtrans->isEnabled() || ! $midtrans->verifySignature($body)) {
-            log_message('warning', 'Rejected Midtrans webhook (bad signature or disabled).');
-            return $this->response->setStatusCode(403)->setJSON(['status' => 'forbidden']);
-        }
-
-        $paymentRef = (string) ($body['order_id'] ?? '');
+        $merchantOrderId = (string) ($body['merchantOrderId'] ?? '');
         $orderModel = new CartModel();
-        $order      = $orderModel->where('payment_ref', $paymentRef)->first();
+        $order      = $orderModel->where('payment_ref', $merchantOrderId)->first();
         if (! $order) {
-            // Unknown ref — ack with 200 so Midtrans stops retrying.
-            return $this->response->setJSON(['status' => 'ignored']);
+            // Unknown ref — ack with 200 so Duitku stops retrying.
+            return $this->response->setBody('OK');
         }
 
-        $newPaymentStatus = $midtrans->mapStatus($body);
+        $resultCode       = (string) ($body['resultCode'] ?? '');
+        $newPaymentStatus = $duitku->mapResultCode($resultCode);
+
         $update = [
             'payment_status' => $newPaymentStatus,
-            'payment_method' => (string) ($body['payment_type'] ?? $order['payment_method']),
+            'payment_method' => (string) ($body['paymentCode'] ?? $order['payment_method']),
         ];
 
         // Promote the order lifecycle to 'paid' once (and only once).
@@ -154,34 +155,28 @@ class PaymentController extends BaseController
 
         $orderModel->update((int) $order['id'], $update);
 
-        return $this->response->setJSON(['status' => 'ok']);
+        // Duitku expects a 200 OK body to consider the callback delivered.
+        return $this->response->setBody('OK');
     }
 
     /**
-     * Browser redirect after Snap closes on success. The webhook does the real
-     * state change; here we just route the user to their order page.
+     * Browser redirect after the Pop closes / the user returns. The callback
+     * does the real state change; here we just route the user to their order.
      */
-    public function finish()
+    public function return()
     {
         $orderId = (int) $this->request->getGet('order');
-        if ($orderId > 0) {
-            return redirect()->to('/account/orders/' . $orderId)
-                ->with('success', 'Thanks! We are confirming your payment — this updates automatically.');
+        if ($orderId <= 0) {
+            return redirect()->to('/account/orders');
         }
-        return redirect()->to('/account/orders');
-    }
 
-    public function unfinish()
-    {
-        $orderId = (int) $this->request->getGet('order');
-        $to = $orderId > 0 ? '/account/orders/' . $orderId : '/account/orders';
-        return redirect()->to($to)->with('error', 'Payment not completed. You can resume it from your order.');
-    }
+        $resultCode = (string) $this->request->getGet('resultCode');
+        $flash = match ($resultCode) {
+            '00'    => ['success', 'Thanks! We are confirming your payment — this updates automatically.'],
+            '01'    => ['error', 'Payment not completed yet. You can resume it from your order.'],
+            default => ['error', 'Payment was cancelled or failed. You can try again from your order.'],
+        };
 
-    public function error()
-    {
-        $orderId = (int) $this->request->getGet('order');
-        $to = $orderId > 0 ? '/account/orders/' . $orderId : '/account/orders';
-        return redirect()->to($to)->with('error', 'Payment failed. Please try again or use another method.');
+        return redirect()->to('/account/orders/' . $orderId)->with($flash[0], $flash[1]);
     }
 }
