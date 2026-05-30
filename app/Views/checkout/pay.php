@@ -55,22 +55,34 @@
         btn.disabled = true;
         hint.textContent = 'Preparing secure payment…';
 
+        var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+        if (csrfName && csrfHash) headers['X-CSRF-TOKEN'] = csrfHash;
+
         var form = new FormData();
         if (csrfName && csrfHash) form.append(csrfName, csrfHash);
 
         fetch('<?= base_url('/payment/invoice') ?>/' + orderId, {
             method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            headers: headers,
             body: form
         })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+        .then(function (r) {
+            return r.text().then(function (text) {
+                try { return { ok: r.ok, data: JSON.parse(text) }; }
+                catch (e) { return { ok: false, data: { message: 'Unexpected server response (HTTP ' + r.status + ').' } }; }
+            });
+        })
+        .then(function (res) {
+            var data = res.data || {};
             if (data.status === 'already_paid') {
                 window.location.href = ordersBase + '/' + orderId;
                 return;
             }
-            if (data.status !== 'success' || !data.reference || typeof checkout === 'undefined') {
+            if (data.status !== 'success' || !data.reference) {
                 throw new Error(data.message || 'Could not start payment.');
+            }
+            if (typeof checkout === 'undefined') {
+                throw new Error('Payment library failed to load. Please refresh and try again.');
             }
             checkout.process(data.reference, {
                 defaultLanguage: 'id',

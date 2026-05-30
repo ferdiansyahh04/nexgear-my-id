@@ -98,7 +98,10 @@ class PaymentController extends BaseController
             log_message('error', 'Duitku invoice creation failed: {msg}', ['msg' => $e->getMessage()]);
             return $this->response->setStatusCode(502)->setJSON([
                 'status'  => 'error',
-                'message' => 'Could not start the payment. Please try again.',
+                // Surface the gateway's own message (e.g. "Wrong Signature",
+                // "Amount is different") — these are operational, not secret,
+                // and make misconfiguration obvious to the operator.
+                'message' => 'Payment could not start: ' . $e->getMessage(),
             ]);
         }
 
