@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="520" height="160" role="img" aria-label="NexGear">
+  <rect width="520" height="160" fill="#ffffff"/>
+  <!-- Wordmark -->
+  <text x="260" y="86" text-anchor="middle"
+        font-family="'Space Grotesk', 'Helvetica Neue', Arial, sans-serif"
+        font-size="68" font-weight="700" letter-spacing="-2"
+        fill="#0d0d0d">NEXGEAR</text>
+  <!-- Tagline -->
+  <text x="260" y="118" text-anchor="middle"
+        font-family="'Space Grotesk', 'Helvetica Neue', Arial, sans-serif"
+        font-size="16" font-weight="500" letter-spacing="8"
+        fill="#666666">PREMIUM GEAR STORE</text>
+  <!-- Lime accent rule -->
+  <rect x="170" y="132" width="180" height="6" fill="#d4ff37"/>
+</svg>

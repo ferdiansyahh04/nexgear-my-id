@@ -131,11 +131,12 @@ class AccountController extends BaseController
         }
 
         return view('account/order_detail', [
-            'title'     => 'Order #' . $id,
-            'order'     => $order,
-            'items'     => $items,
-            'statusMap' => OrderStatusService::labels(),
-            'timeline'  => OrderStatusService::timelineFor($order['status']),
+            'title'           => 'Order #' . $id,
+            'order'           => $order,
+            'items'           => $items,
+            'statusMap'       => OrderStatusService::labels(),
+            'timeline'        => OrderStatusService::timelineFor($order['status']),
+            'paymentsEnabled' => (new \App\Libraries\MidtransService())->isEnabled(),
         ]);
     }
 

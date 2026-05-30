@@ -76,6 +76,12 @@ jobs:
               COMPOSER_ALLOW_SUPERUSER=1 \
               composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
+            echo '=== Running database migrations ==='
+            # Idempotent — CI4 tracks applied migrations, so re-running is a
+            # no-op once everything is up to date. Required for schema changes
+            # (e.g. the cart payment columns) to land before the app serves them.
+            sudo -u www-data php spark migrate --all || echo "WARN: migrate exited non-zero — continuing"
+
             echo '=== Importing Noir Gear catalogue (keyboards & mice) ==='
             # Idempotent — upserts by name and skips already-downloaded images,
             # so re-running on every deploy is safe and cheap. The first run

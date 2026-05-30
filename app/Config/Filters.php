@@ -27,7 +27,7 @@ class Filters extends BaseConfig
 
     public array $globals = [
         'before' => [
-            'csrf',
+            'csrf' => ['except' => ['payment/notification']],
             'invalidchars',
         ],
         'after' => [
@@ -45,6 +45,9 @@ class Filters extends BaseConfig
         // Drop CSRF + secureheaders during automated tests so PHPUnit's
         // FeatureTestTrait can hit POST endpoints without seeding tokens.
         if (ENVIRONMENT === 'testing') {
+            // 'csrf' may be either a plain value or a keyed config entry
+            // (['csrf' => ['except' => [...]]]); strip both shapes.
+            unset($this->globals['before']['csrf']);
             $this->globals['before'] = array_values(array_diff(
                 $this->globals['before'],
                 ['csrf']

@@ -99,11 +99,48 @@ $status = $statusMap[$order['status']] ?? ['label' => ucfirst($order['status']),
                 <hr class="border-dark border-opacity-25 my-4">
 
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Total Paid</span>
+                    <span class="text-muted">Total<?= ($order['payment_status'] ?? 'unpaid') === 'paid' ? ' Paid' : '' ?></span>
                     <span class="font-serif italic h4 mb-0">
                         Rp <?= number_format((float) $order['total'], 0, ',', '.') ?>
                     </span>
                 </div>
+
+                <?php
+                // Payment block — only meaningful for orders awaiting payment.
+                $payStatus = $order['payment_status'] ?? 'unpaid';
+                $payLabels = [
+                    'unpaid'   => ['Awaiting payment', 'warning'],
+                    'pending'  => ['Payment pending',  'warning'],
+                    'paid'     => ['Paid',             'success'],
+                    'failed'   => ['Payment failed',   'danger'],
+                    'expired'  => ['Payment expired',  'danger'],
+                    'refunded' => ['Refunded',         'muted'],
+                ];
+                [$payText, $payTone] = $payLabels[$payStatus] ?? ['Unknown', 'muted'];
+                $canPay = in_array($payStatus, ['unpaid', 'pending', 'failed', 'expired'], true)
+                    && ! in_array($order['status'], ['cancelled', 'delivered'], true);
+                ?>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Payment</span>
+                    <span class="status-pill status-tone-<?= esc($payTone) ?>"><?= esc($payText) ?></span>
+                </div>
+
+                <?php if ($paymentsEnabled && $canPay): ?>
+                    <a href="<?= base_url('/checkout/pay/' . (int) $order['id']) ?>"
+                       class="btn btn-dark w-100 py-3 rounded-0 text-uppercase fw-bold d-flex justify-content-between px-4 mt-2"
+                       style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; font-size: 0.8rem;">
+                        <span><i class="bi bi-credit-card me-2"></i><?= $payStatus === 'pending' ? 'Resume Payment' : 'Pay Now' ?></span>
+                        <span>→</span>
+                    </a>
+                    <p class="text-center text-muted small mt-3 mb-0 font-serif italic">
+                        <i class="bi bi-lock-fill me-1"></i> Secure payment via Midtrans
+                    </p>
+                <?php elseif ($payStatus === 'paid' && ! empty($order['paid_at'])): ?>
+                    <p class="text-muted small mb-0 font-serif italic">
+                        Paid on <?= esc(date('d M Y, H:i', strtotime((string) $order['paid_at']))) ?>
+                        <?= $order['payment_method'] ? '· ' . esc(strtoupper(str_replace('_', ' ', $order['payment_method']))) : '' ?>
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -90,7 +90,18 @@ $routes->group('cart', static function ($routes) {
 $routes->group('checkout', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/', 'CheckoutController::index');
     $routes->post('place', 'CheckoutController::place');
+    $routes->get('pay/(:num)', 'CheckoutController::pay/$1');
 });
+
+// ── Payments (Midtrans Snap) ─────────────────────────────────────────────
+// snap-token creation requires an authenticated owner; the redirects are
+// cosmetic. The webhook is server-to-server (no CSRF, no auth) and is
+// authenticated instead via the SHA-512 signature_key it carries.
+$routes->post('payment/snap/(:num)', 'PaymentController::snap/$1', ['filter' => 'auth']);
+$routes->post('payment/notification', 'PaymentController::notification');
+$routes->get('payment/finish', 'PaymentController::finish', ['filter' => 'auth']);
+$routes->get('payment/unfinish', 'PaymentController::unfinish', ['filter' => 'auth']);
+$routes->get('payment/error', 'PaymentController::error', ['filter' => 'auth']);
 
 // Admin & staff readable views (orders/messages/reports/dashboard/audit)
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => 'staff'], static function ($routes) {

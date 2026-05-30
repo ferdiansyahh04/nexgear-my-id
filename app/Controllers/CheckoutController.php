@@ -160,7 +160,43 @@ class CheckoutController extends BaseController
         $couponSvc->clear();
         (new \App\Libraries\AbandonedCartService())->clearForUser((int) session('user_id'));
 
+        // When Midtrans is configured, send the customer to the payment step.
+        // Otherwise fall back to the legacy "order saved, pay offline" flow so
+        // the store keeps working without gateway keys.
+        if ((new \App\Libraries\MidtransService())->isEnabled()) {
+            return redirect()->to('/checkout/pay/' . $cartId);
+        }
+
         return redirect()->to('/account/orders/' . $cartId)
             ->with('success', 'Checkout complete. Order #' . $cartId . ' saved.');
+    }
+
+    /**
+     * Payment step — shows the Snap "Pay Now" page for an unpaid order the
+     * current user owns. Only reachable when Midtrans is configured.
+     */
+    public function pay(int $orderId)
+    {
+        $midtrans = new \App\Libraries\MidtransService();
+        if (! $midtrans->isEnabled()) {
+            return redirect()->to('/account/orders/' . $orderId);
+        }
+
+        $order = (new CartModel())->find($orderId);
+        if (! $order || (int) $order['user_id'] !== (int) session('user_id')) {
+            return redirect()->to('/account/orders')->with('error', 'Order not found.');
+        }
+
+        if (($order['payment_status'] ?? 'unpaid') === 'paid') {
+            return redirect()->to('/account/orders/' . $orderId)
+                ->with('success', 'This order is already paid.');
+        }
+
+        return view('checkout/pay', [
+            'title'     => 'Complete Payment',
+            'order'     => $order,
+            'snapJsUrl' => $midtrans->snapJsUrl(),
+            'clientKey' => $midtrans->clientKey(),
+        ]);
     }
 }
