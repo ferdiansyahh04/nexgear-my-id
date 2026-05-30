@@ -22,7 +22,7 @@
 
         <!-- Category nav (anchor jumps) -->
         <div class="d-flex gap-2 flex-wrap mb-5">
-            <?php foreach ($categories as $cat): ?>
+            <?php foreach ($faqCategories as $cat): ?>
                 <a href="#<?= esc($cat['key']) ?>" class="filter-chip">
                     <?= esc($cat['title']) ?>
                 </a>
@@ -30,7 +30,7 @@
         </div>
 
         <!-- FAQ groups -->
-        <?php foreach ($categories as $cat): ?>
+        <?php foreach ($faqCategories as $cat): ?>
             <section id="<?= esc($cat['key']) ?>" class="faq-group">
                 <h3 class="faq-group-title">
                     <?= esc($cat['title']) ?>

@@ -19,6 +19,15 @@ if ($categories === []) {
         $categories = [];
     }
 }
+
+// Defense in depth: this partial is included by the global layout, so a
+// controller that happens to pass an unrelated `$categories` (e.g. the Help
+// page's FAQ structure) must not be able to 500 the whole site. Only keep
+// rows that actually look like product-category records.
+$categories = array_values(array_filter(
+    is_array($categories) ? $categories : [],
+    static fn ($cat) => is_array($cat) && isset($cat['id'], $cat['slug'], $cat['name'])
+));
 ?>
 <div class="onboarding-overlay" id="onboardingOverlay" hidden aria-hidden="true" role="dialog" aria-labelledby="onboardingTitle">
     <div class="onboarding-shell">

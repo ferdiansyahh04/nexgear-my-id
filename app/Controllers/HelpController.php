@@ -7,8 +7,8 @@ class HelpController extends BaseController
     public function index()
     {
         return view('help/index', [
-            'title'      => 'Help & FAQ',
-            'categories' => $this->categories(),
+            'title'         => 'Help & FAQ',
+            'faqCategories' => $this->categories(),
         ]);
     }
 
