@@ -43,6 +43,30 @@ php scripts\build_linsoul_data.php
 php spark etalase:import-linsoul --refresh
 ```
 
+## `build_deskmat_data.php`
+
+Regenerates `app/Database/Seeds/data/deskmat_mousepads.json` from fresh
+snapshots of two Shopify storefronts:
+
+- <https://pressplayid.com/collections/deskmat/products.json>
+- <https://www.noirgear.com/collections/deskmat-mousepad/products.json>
+
+Curates a "best of" set of mousepads/deskmats across both stores. Both price
+in IDR, so no currency conversion is applied. Everything maps to the
+`mousepads` category.
+
+```powershell
+# 1. Refresh the source feeds (one-off)
+curl.exe -s "https://pressplayid.com/collections/deskmat/products.json?limit=250" -o pressplay_deskmat.json
+curl.exe -s "https://www.noirgear.com/collections/deskmat-mousepad/products.json?limit=250" -o noir_deskmat.json
+
+# 2. Regenerate the seed JSON
+php scripts\build_deskmat_data.php
+
+# 3. Apply on the running database (or commit + let CI deploy it)
+php spark etalase:import-deskmat --refresh
+```
+
 ## `verify_products.php`
 
 Quick read-only sanity check for the seeded etalase: lists every keyboard +

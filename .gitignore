@@ -22,6 +22,8 @@ public/uploads/products/*
 products.json
 linsoul_all.json
 linsoul_mic.json
+pressplay_deskmat.json
+noir_deskmat.json
 
 # IDE / editor workspace files
 *.code-workspace

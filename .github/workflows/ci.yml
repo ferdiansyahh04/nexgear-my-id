@@ -87,6 +87,11 @@ jobs:
             # category with curated IEMs from the JSON shipped in the repo.
             sudo -u www-data php spark etalase:import-linsoul || echo "WARN: import-linsoul exited non-zero — continuing"
 
+            echo '=== Importing deskmat catalogue (mousepads) ==='
+            # Curated deskmats from Press Play & Noir Gear into the mousepads
+            # category. Idempotent upsert-by-name, same as the other importers.
+            sudo -u www-data php spark etalase:import-deskmat || echo "WARN: import-deskmat exited non-zero — continuing"
+
             echo '=== Clearing app cache (after import so stale listings get evicted) ==='
             # The unfiltered storefront listing is page-cached for 5 minutes
             # (ProductController::index). If we cleared the cache before the
