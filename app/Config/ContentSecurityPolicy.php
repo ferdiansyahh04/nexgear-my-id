@@ -149,9 +149,13 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Lists valid endpoints for submission from `<form>` tags.
      *
+     * Includes the Duitku hosted payment hosts because the Pay Now form posts
+     * to our server, which then redirects (302) to Duitku's checkout page —
+     * and form-action is evaluated against the *final* redirect target.
+     *
      * @var list<string>|string
      */
-    public $formAction = 'self';
+    public $formAction = ['self', 'app-sandbox.duitku.com', 'app-prod.duitku.com', 'sandbox.duitku.com', 'passport.duitku.com'];
 
     /**
      * Specifies the sources that can embed the current page.
