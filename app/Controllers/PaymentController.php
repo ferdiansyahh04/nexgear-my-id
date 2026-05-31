@@ -29,6 +29,24 @@ class PaymentController extends BaseController
         // ajaxPost helper can refresh it (CSRF tokens regenerate per request).
         $csrf = ['csrfName' => csrf_token(), 'csrfToken' => csrf_hash()];
 
+        try {
+            return $this->createInvoice($orderId, $csrf);
+        } catch (\Throwable $e) {
+            // Anything unexpected (DB schema drift, etc.) becomes a clear JSON
+            // error instead of a bare HTTP 500 the front-end can't read.
+            log_message('error', 'Payment invoice failed: {msg}', ['msg' => $e->getMessage()]);
+            return $this->response->setStatusCode(500)->setJSON(array_merge($csrf, [
+                'status'  => 'error',
+                'message' => 'Payment could not start: ' . $e->getMessage(),
+            ]));
+        }
+    }
+
+    /**
+     * @param array{csrfName:string, csrfToken:string} $csrf
+     */
+    private function createInvoice(int $orderId, array $csrf)
+    {
         $duitku = new DuitkuService();
         if (! $duitku->isEnabled()) {
             return $this->response->setStatusCode(503)->setJSON(array_merge($csrf, [
@@ -109,11 +127,20 @@ class PaymentController extends BaseController
             ]));
         }
 
-        $orderModel->update($orderId, [
+        // Persist the gateway reference. The token column was renamed
+        // snap_token → payment_token; tolerate whichever the live schema has
+        // so a not-yet-run migration can't 500 the payment.
+        $update = [
             'payment_ref'    => $merchantOrderId,
-            'payment_token'  => $invoice['reference'], // stores the Duitku reference
             'payment_status' => 'pending',
-        ]);
+        ];
+        $cols = db_connect()->getFieldNames('cart');
+        if (in_array('payment_token', $cols, true)) {
+            $update['payment_token'] = $invoice['reference'];
+        } elseif (in_array('snap_token', $cols, true)) {
+            $update['snap_token'] = $invoice['reference'];
+        }
+        $orderModel->update($orderId, $update);
 
         return $this->response->setJSON(array_merge($csrf, [
             'status'     => 'success',
