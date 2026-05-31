@@ -1,6 +1,12 @@
 # NexGear® Elite Storefront
 
-A premium, high-conversion e-commerce platform for elite gaming hardware. Built with **CodeIgniter 4**, **MySQL**, and a **Tech-Editorial** design system inspired by brutalist aesthetics and precision engineering.
+A premium, high-conversion e-commerce platform for elite gaming hardware and audio gear. Built with **CodeIgniter 4**, **MySQL**, and a **Tech-Editorial** design system inspired by brutalist aesthetics and precision engineering.
+
+Live demo: <https://nexgear.my.id>
+
+> **Academic project note.** Online payments run against the **Duitku Sandbox**
+> (test mode — no real money). Going live only requires swapping in production
+> Duitku keys and flipping one flag; see [Payments](#-payments-duitku).
 
 ![NexGear Banner](https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?q=80&w=1200&auto=format&fit=crop)
 
@@ -37,31 +43,54 @@ The NexGear Store follows a **Brutalist Editorial** aesthetic, prioritizing visu
 
 ### 🛒 Storefront Experience
 - **NuPhy-Inspired Hero**: High-impact product showcase with editorial typography.
+- **Curated Catalogue**: Keyboards, mice, in-ear monitors (headsets), and deskmats/mousepads — across budget to flagship tiers.
+- **Curated Home Lineup**: The home "Curated Store" surfaces a varied premium "best of" (one flagship per category), not just the newest rows.
+- **Filtering & Search**: AJAX category chips, sort, price range, and stock filters with an editorial paginator (custom CI4 pager template — no plain blue page numbers).
 - **Interactive Marquees**: Dynamic tickers for brand messaging and promotions.
-- **Smart Cart**: Persistent session-based cart with real-time updates.
-- **Streamlined Checkout**: Integrated delivery data capture and order summary.
+- **Smart Cart**: Persistent session-based cart with real-time updates, coupons, and a wishlist.
+- **Streamlined Checkout**: Saved addresses, order summary, then online payment.
+
+### 💳 Payments (Duitku)
+- **Hosted redirect flow**: checkout creates a Duitku invoice and redirects to Duitku's payment page (bank transfer/VA, e-wallet, QRIS, retail, card).
+- **Signature-verified callback** marks orders paid server-to-server; the return handler **also reconciles** via Duitku's `transactionStatus` API so a paid order settles even if the callback is delayed.
+- **Graceful fallback**: with no Duitku keys configured, checkout falls back to a "place order, pay offline" flow so the store never breaks.
 
 ### 🛠️ Administrative Suite
 - **Elite Dashboard**: Real-time inventory analytics and stock health monitoring.
 - **Full CRUD Management**: Comprehensive tools for product media and metadata.
-- **Order Tracking**: Detailed records for transaction management.
+- **Order Tracking**: Lifecycle status (`Placed → Paid → Processing → Shipped → Delivered`) with audit logging.
+
+### 🤖 Catalogue Importers (Spark commands)
+Idempotent importers pull curated products (with images) from public Shopify feeds into the etalase. They upsert by name and run automatically on deploy.
+
+```bash
+php spark etalase:import-noirgear   # keyboards & mice (noirgear.com)
+php spark etalase:import-linsoul    # in-ear monitors (linsoul.com) → headsets
+php spark etalase:import-deskmat    # deskmats/mousepads (Press Play + Noir Gear)
+```
 
 ## 📁 Technical Architecture
+
+**Stack:** CodeIgniter 4 (PHP 8.2+) · MySQL/MariaDB (utf8mb4) · Bootstrap 5 + custom editorial CSS · Duitku payments · Dompdf (invoices) · RobThree/BaconQR (TOTP 2FA). No frontend build step.
 
 ```text
 nexgear-store/
 ├── app/
-│   ├── Config/              # System & Security configuration
-│   ├── Controllers/         # MVC Logic (Storefront, Cart, Admin)
-│   ├── Filters/             # Access Control (Admin/User Roles)
+│   ├── Commands/            # Spark CLI: catalogue importers, payment:status, backups, cron
+│   ├── Config/              # System & Security config (incl. Duitku, CSP, Pager)
+│   ├── Controllers/         # MVC Logic (Storefront, Cart, Checkout, Payment, Admin)
+│   ├── Database/            # Migrations + seed data (catalogue JSON)
+│   ├── Filters/             # Access Control (auth / admin / staff / throttle)
+│   ├── Libraries/           # Services (Cart, Coupon, Duitku, Mailer, Audit, TOTP…)
 │   ├── Models/              # Data persistence (ActiveRecord)
-│   └── Views/               # Premium Layouts & AOS-enabled components
+│   └── Views/               # Premium Layouts & AOS-enabled components (incl. pagers/)
 ├── public/
-│   ├── assets/              # Elite CSS, JS, and AOS libraries
+│   ├── assets/              # Editorial CSS, JS, icons, AOS
 │   └── uploads/             # Product Media Storage
+├── scripts/                 # Dev-only helpers to (re)generate catalogue seed JSON
 ├── database/
-│   └── nexgear_store.sql   # Schema & Seed Data
-└── .env                     # Environment settings
+│   └── nexgear_store.sql    # Schema & Seed Data
+└── .env                     # Environment settings (keys live here — never commit)
 ```
 
 ## 🛠️ Installation & Comprehensive Setup Guide
@@ -153,7 +182,43 @@ If a hash looks like plain text (someone INSERT-ed plaintext into the DB), reset
 php spark fix:seed-users
 ```
 
-### 5. Running the Application
+### 5. Payments (Duitku)
+
+Online payment uses **Duitku** (an Indonesian payment gateway). It is optional
+for local development — leave the keys blank and checkout falls back to an
+offline "order saved" flow.
+
+1. Create a project at the [Duitku merchant portal](https://passport.duitku.com/merchant/Project)
+   and copy its **Merchant Code** and **API Key (Merchant Key)**. Use a
+   **Sandbox** project while testing.
+2. Add the keys to `.env` (never commit them):
+
+   ```dotenv
+   duitku.merchantCode = DSxxxx
+   duitku.apiKey       = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   duitku.production   = false        # true only when going live
+   ```
+
+3. In the Duitku project settings, set:
+   - **Callback URL**: `https://your-domain/payment/callback`
+   - **Return URL**: `https://your-domain/payment/return`
+4. If the server has a strict firewall, whitelist Duitku's callback IPs
+   (Sandbox: `182.23.85.11`, `182.23.85.12`, `103.177.101.187`, `103.177.101.188`).
+
+Verify the integration from the server (prints config without leaking secrets,
+checks the `cart` payment columns, and can ping the gateway):
+
+```bash
+php spark payment:status            # show config + schema state
+php spark payment:status --repair   # add any missing cart payment columns
+php spark payment:status --ping     # send a live test invoice to Duitku
+```
+
+**Going live:** switch to the production project's keys, set
+`duitku.production = true`, point the Callback/Return URLs at the production
+project, and reload PHP-FPM.
+
+### 6. Running the Application
 
 **Local development**
 
@@ -236,7 +301,7 @@ Add to crontab (`crontab -e -u www-data`):
 0 3 * * 0     cd /var/www/nexgear-store && /usr/bin/php spark db:backup >> writable/logs/cron.log 2>&1
 ```
 
-### 6. Default Seed Accounts
+### 7. Default Seed Accounts
 
 | Role | Email | Password |
 |---|---|---|
@@ -245,14 +310,22 @@ Add to crontab (`crontab -e -u www-data`):
 
 **Change these immediately on any non-local environment.**
 
-### 7. Tests
+### 8. Tests
 
 ```bash
 php spark test:setup    # creates nexgear_test DB and applies the schema
-composer test           # runs PHPUnit (38 tests)
+composer test           # runs the full PHPUnit suite (needs the test DB)
 ```
 
-CI runs the same suite plus a deploy step on push to `main`. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+The DB-free **UnitFast** suite covers pure business logic (cart, order-status,
+Duitku signatures) and is what CI gates on — it runs without a database:
+
+```bash
+vendor/bin/phpunit --testsuite UnitFast
+```
+
+CI runs this fast suite plus an SSH deploy step on push to `main`. See
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## 🔒 Security Posture
 
@@ -282,6 +355,7 @@ The store ships with security defaults wired in. Summary in [OWASP Top 10](https
 - [ ] Confirm `https://your-domain/uploads/test.php` returns 403 (not executes)
 - [ ] Set DB user permissions to the application database only — never `GRANT ALL` on `*.*`
 - [ ] Schedule offsite backups (`php spark db:backup` writes to `writable/backups/`)
+- [ ] Payments: switch to production Duitku keys, set `duitku.production = true`, update the Callback/Return URLs on the production project, and verify with `php spark payment:status --ping`
 
 ### Reporting a security issue
 
