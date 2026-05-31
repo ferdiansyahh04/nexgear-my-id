@@ -21,8 +21,20 @@ class PaymentStatus extends BaseCommand
     protected $group       = 'NexGear';
     protected $name        = 'payment:status';
     protected $description = 'Show Duitku payment config status and optionally ping the gateway.';
-    protected $usage       = 'payment:status [--ping]';
-    protected $options     = ['--ping' => 'Send a small live createInvoice test to Duitku.'];
+    protected $usage       = 'payment:status [--ping] [--repair]';
+    protected $options     = [
+        '--ping'   => 'Send a small live createInvoice test to Duitku.',
+        '--repair' => 'Add any missing payment columns to the cart table.',
+    ];
+
+    /** Columns the payment flow needs on `cart`, with their definitions. */
+    private const PAYMENT_COLUMNS = [
+        'payment_status' => ['type' => 'VARCHAR', 'constraint' => 20, 'null' => false, 'default' => 'unpaid'],
+        'payment_ref'    => ['type' => 'VARCHAR', 'constraint' => 64, 'null' => true],
+        'payment_token'  => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
+        'payment_method' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true],
+        'paid_at'        => ['type' => 'DATETIME', 'null' => true],
+    ];
 
     public function run(array $params)
     {
@@ -39,9 +51,48 @@ class PaymentStatus extends BaseCommand
         CLI::write('  isEnabled    : ' . ($cfg->isEnabled() ? 'YES' : 'NO'),
             $cfg->isEnabled() ? 'green' : 'red');
 
+        // ── Schema check (this is what the live payment write needs) ──────
+        CLI::newLine();
+        CLI::write('Cart payment columns', 'yellow');
+        $db      = db_connect();
+        $cols    = $db->getFieldNames('cart');
+        $missing = [];
+        foreach (self::PAYMENT_COLUMNS as $name => $def) {
+            // payment_token may legitimately still be named snap_token.
+            $present = in_array($name, $cols, true)
+                || ($name === 'payment_token' && in_array('snap_token', $cols, true));
+            CLI::write('  ' . str_pad($name, 16) . ' : ' . ($present ? 'present' : 'MISSING'),
+                $present ? 'green' : 'red');
+            if (! $present) {
+                $missing[$name] = $def;
+            }
+        }
+
+        if ($missing !== [] && CLI::getOption('repair') !== null) {
+            CLI::newLine();
+            CLI::write('Repairing — adding missing columns…', 'yellow');
+            try {
+                $forge = \Config\Database::forge();
+                $forge->addColumn('cart', $missing);
+                CLI::write('  [OK] Added: ' . implode(', ', array_keys($missing)), 'green');
+                $missing = [];
+            } catch (\Throwable $e) {
+                CLI::error('  Repair failed: ' . $e->getMessage());
+                return EXIT_ERROR;
+            }
+        } elseif ($missing !== []) {
+            CLI::newLine();
+            CLI::error('Missing columns: ' . implode(', ', array_keys($missing)));
+            CLI::write('Run "php spark payment:status --repair" to add them.', 'yellow');
+        }
+
         if (! $cfg->isEnabled()) {
             CLI::newLine();
             CLI::error('Payments are DISABLED — set duitku.merchantCode and duitku.apiKey in .env, then reload PHP-FPM.');
+            return EXIT_ERROR;
+        }
+
+        if ($missing !== []) {
             return EXIT_ERROR;
         }
 
