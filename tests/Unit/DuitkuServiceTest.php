@@ -104,4 +104,14 @@ class DuitkuServiceTest extends CIUnitTestCase
         $this->assertSame('failed', $svc->mapResultCode('02'));
         $this->assertSame('unpaid', $svc->mapResultCode('99'));
     }
+
+    public function testMapStatusCode(): void
+    {
+        $svc = $this->service();
+        // Cek Transaksi codes: 00 success, 01 pending, 02 canceled/failed.
+        $this->assertSame('paid',    $svc->mapStatusCode('00'));
+        $this->assertSame('pending', $svc->mapStatusCode('01'));
+        $this->assertSame('failed',  $svc->mapStatusCode('02'));
+        $this->assertSame('unpaid',  $svc->mapStatusCode('99'));
+    }
 }

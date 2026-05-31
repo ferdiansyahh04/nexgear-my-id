@@ -5,21 +5,22 @@ namespace App\Libraries;
 use Config\Duitku as DuitkuConfig;
 
 /**
- * Thin Duitku Pop client.
+ * Thin Duitku client.
  *
- * Talks to the Duitku Create-Invoice REST API over cURL (no SDK dependency).
- * Responsible for:
+ * Talks to the Duitku REST API over cURL (no SDK dependency). Responsible for:
  *   - creating an invoice (returns a Duitku `reference` + paymentUrl)
- *   - verifying the HMAC-SHA256 signature on incoming callbacks
- *   - mapping Duitku resultCode → our internal payment_status
+ *   - checking a transaction's status (server-side reconciliation)
+ *   - verifying the signature on incoming callbacks
+ *   - mapping Duitku result/status codes → our internal payment_status
  *
  * Keys are read from Config\Duitku, which sources them from .env. When keys
  * are absent the service reports itself disabled and callers fall back to the
  * legacy non-payment checkout, so a missing key never breaks the store.
  *
- * Signature formulas (Duitku, current HMAC scheme):
- *   create-invoice header: HMAC_SHA256(merchantCode + timestamp, apiKey)
- *   callback validation:   HMAC_SHA256(merchantCode + amount + merchantOrderId, apiKey)
+ * Signature formulas (matching the official duitku-php SDK):
+ *   create-invoice header : sha256(merchantCode + timestamp + apiKey)
+ *   check transaction     : md5(merchantCode + merchantOrderId + apiKey)
+ *   callback validation   : md5(merchantCode + amount + merchantOrderId + apiKey)
  */
 class DuitkuService
 {
@@ -134,6 +135,55 @@ class DuitkuService
     }
 
     /**
+     * Check a transaction's current status directly with Duitku (server-side
+     * reconciliation, independent of the callback).
+     *
+     * Signature: md5(merchantCode + merchantOrderId + apiKey).
+     *
+     * @return array{statusCode:string, statusMessage:string, reference:string, amount:string}
+     *
+     * @throws \RuntimeException on transport / API error
+     */
+    public function checkTransaction(string $merchantOrderId): array
+    {
+        if (! $this->isEnabled()) {
+            throw new \RuntimeException('Duitku is not configured.');
+        }
+
+        $signature = md5($this->config->merchantCode . $merchantOrderId . $this->config->apiKey);
+
+        $payload = [
+            'merchantCode'    => $this->config->merchantCode,
+            'merchantOrderId' => $merchantOrderId,
+            'signature'       => $signature,
+        ];
+
+        $url = $this->config->webApiBase() . '/webapi/api/merchant/transactionStatus';
+        $response = $this->requestJson($url, $payload);
+
+        return [
+            'statusCode'    => (string) ($response['statusCode'] ?? ''),
+            'statusMessage' => (string) ($response['statusMessage'] ?? ''),
+            'reference'     => (string) ($response['reference'] ?? ''),
+            'amount'        => (string) ($response['amount'] ?? ''),
+        ];
+    }
+
+    /**
+     * Map a Duitku transaction-status statusCode to our internal payment_status.
+     * (Cek Transaksi: 00 = success, 01 = pending, 02 = canceled/failed.)
+     */
+    public function mapStatusCode(string $statusCode): string
+    {
+        return match ($statusCode) {
+            '00'    => 'paid',
+            '01'    => 'pending',
+            '02'    => 'failed',
+            default => 'unpaid',
+        };
+    }
+
+    /**
      * Map a Duitku resultCode to our internal payment_status.
      *
      * Callback result codes: 00 = success, 01 = failed (some docs use 02).
@@ -150,7 +200,8 @@ class DuitkuService
     }
 
     /**
-     * POST a JSON payload to the Duitku API with the auth headers.
+     * POST a JSON payload to the Duitku Pop API with the create-invoice auth
+     * headers (signature / timestamp / merchantcode).
      *
      * @param array<string, mixed> $payload
      *
@@ -160,20 +211,52 @@ class DuitkuService
      */
     private function request(string $path, array $payload, string $timestamp, string $signature): array
     {
-        $url = $this->config->apiBase() . $path;
+        return $this->curlJson(
+            $this->config->apiBase() . $path,
+            json_encode($payload),
+            [
+                'x-duitku-signature: ' . $signature,
+                'x-duitku-timestamp: ' . $timestamp,
+                'x-duitku-merchantcode: ' . $this->config->merchantCode,
+            ]
+        );
+    }
 
+    /**
+     * POST a JSON payload to an absolute Duitku URL (no special headers — the
+     * signature travels inside the body). Used by transactionStatus.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     *
+     * @throws \RuntimeException
+     */
+    private function requestJson(string $url, array $payload): array
+    {
+        return $this->curlJson($url, json_encode($payload), []);
+    }
+
+    /**
+     * Shared cURL JSON POST.
+     *
+     * @param list<string> $extraHeaders
+     *
+     * @return array<string, mixed>
+     *
+     * @throws \RuntimeException
+     */
+    private function curlJson(string $url, string $body, array $extraHeaders): array
+    {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($payload),
-            CURLOPT_HTTPHEADER     => [
+            CURLOPT_POSTFIELDS     => $body,
+            CURLOPT_HTTPHEADER     => array_merge([
                 'Accept: application/json',
                 'Content-Type: application/json',
-                'x-duitku-signature: ' . $signature,
-                'x-duitku-timestamp: ' . $timestamp,
-                'x-duitku-merchantcode: ' . $this->config->merchantCode,
-            ],
+            ], $extraHeaders),
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_TIMEOUT        => 30,
             CURLOPT_SSL_VERIFYPEER => true,

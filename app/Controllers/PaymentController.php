@@ -142,28 +142,24 @@ class PaymentController extends BaseController
         $resultCode       = (string) ($body['resultCode'] ?? '');
         $newPaymentStatus = $duitku->mapResultCode($resultCode);
 
-        $update = [
-            'payment_status' => $newPaymentStatus,
-            'payment_method' => (string) ($body['paymentCode'] ?? $order['payment_method']),
-        ];
-
-        // Promote the order lifecycle to 'paid' once (and only once).
-        if ($newPaymentStatus === 'paid' && ($order['payment_status'] ?? '') !== 'paid') {
-            $update['paid_at'] = date('Y-m-d H:i:s');
-            if (in_array($order['status'], ['checked_out'], true)) {
-                $update['status'] = 'paid';
-            }
-        }
-
-        $orderModel->update((int) $order['id'], $update);
+        $this->applyPaymentStatus(
+            (int) $order['id'],
+            $order,
+            $newPaymentStatus,
+            (string) ($body['paymentCode'] ?? $order['payment_method'])
+        );
 
         // Duitku expects a 200 OK body to consider the callback delivered.
         return $this->response->setBody('OK');
     }
 
     /**
-     * Browser redirect after the customer returns from Duitku. The callback
-     * does the real state change; here we just route the user to their order.
+     * Browser redirect after the customer returns from Duitku.
+     *
+     * The callback is the primary source of truth, but it can be delayed or
+     * blocked (firewall / unreachable). So on return we ALSO query Duitku's
+     * transactionStatus API and reconcile — this lets the order flip to paid
+     * immediately even when the callback hasn't arrived yet.
      */
     public function return()
     {
@@ -172,13 +168,55 @@ class PaymentController extends BaseController
             return redirect()->to('/account/orders');
         }
 
+        $orderModel = new CartModel();
+        $order      = $orderModel->find($orderId);
+
+        if ($order && (int) $order['user_id'] === (int) session('user_id') && ! empty($order['payment_ref'])) {
+            $duitku = new DuitkuService();
+            if ($duitku->isEnabled() && ($order['payment_status'] ?? '') !== 'paid') {
+                try {
+                    $status = $duitku->checkTransaction((string) $order['payment_ref']);
+                    $mapped = $duitku->mapStatusCode($status['statusCode']);
+                    if ($mapped !== 'unpaid') {
+                        $this->applyPaymentStatus($orderId, $order, $mapped, (string) $order['payment_method']);
+                    }
+                } catch (\Throwable $e) {
+                    // Non-fatal: fall back to the callback to settle status.
+                    log_message('warning', 'Return reconcile failed: {m}', ['m' => $e->getMessage()]);
+                }
+            }
+        }
+
         $resultCode = (string) $this->request->getGet('resultCode');
         $flash = match ($resultCode) {
-            '00'    => ['success', 'Thanks! We are confirming your payment — this updates automatically.'],
+            '00'    => ['success', 'Payment received — thank you! Your order is confirmed.'],
             '01'    => ['error', 'Payment not completed yet. You can resume it from your order.'],
             default => ['error', 'Payment was cancelled or failed. You can try again from your order.'],
         };
 
         return redirect()->to('/account/orders/' . $orderId)->with($flash[0], $flash[1]);
+    }
+
+    /**
+     * Apply a new payment status to an order, promoting the fulfilment status
+     * to 'paid' exactly once. Shared by the callback and the return handler.
+     *
+     * @param array<string, mixed> $order
+     */
+    private function applyPaymentStatus(int $orderId, array $order, string $newPaymentStatus, string $paymentMethod): void
+    {
+        $update = [
+            'payment_status' => $newPaymentStatus,
+            'payment_method' => $paymentMethod,
+        ];
+
+        if ($newPaymentStatus === 'paid' && ($order['payment_status'] ?? '') !== 'paid') {
+            $update['paid_at'] = date('Y-m-d H:i:s');
+            if (in_array($order['status'], ['checked_out'], true)) {
+                $update['status'] = 'paid';
+            }
+        }
+
+        (new CartModel())->update($orderId, $update);
     }
 }

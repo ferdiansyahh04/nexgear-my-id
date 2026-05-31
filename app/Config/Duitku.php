@@ -44,13 +44,24 @@ class Duitku extends BaseConfig
     }
 
     /**
-     * Create-invoice API base host.
+     * Create-invoice API base host (Duitku Pop).
      */
     public function apiBase(): string
     {
         return $this->production
             ? 'https://api-prod.duitku.com'
             : 'https://api-sandbox.duitku.com';
+    }
+
+    /**
+     * Web API host (used by transactionStatus / getPaymentMethod). This is a
+     * DIFFERENT host from the Pop create-invoice base.
+     */
+    public function webApiBase(): string
+    {
+        return $this->production
+            ? 'https://passport.duitku.com'
+            : 'https://sandbox.duitku.com';
     }
 
     /**
