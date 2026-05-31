@@ -14,6 +14,31 @@ jobs:
       matrix:
         php: ['8.2', '8.3']
 
+    # MySQL service so the full PHPUnit suite (Feature + DB-backed Unit tests)
+    # can run, not just the DB-free UnitFast subset.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: nexgear_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      # Point CI4's `tests` database group at the MySQL service above.
+      database.tests.hostname: 127.0.0.1
+      database.tests.database: nexgear_test
+      database.tests.username: root
+      database.tests.password: ''
+      database.tests.DBDriver: MySQLi
+      database.tests.port: 3306
+
     steps:
       - uses: actions/checkout@v4
 
@@ -34,11 +59,24 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Run PHPUnit fast suite (DB-free)
-        # Full Unit + Feature suites need a wired-up database; the UnitFast
-        # subset (CartService, OrderStatusService) covers pure business logic
-        # without DB and gives high-signal coverage for CI gating.
-        run: vendor/bin/phpunit --testsuite UnitFast --testdox
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root --silent; then
+              echo "MySQL is up"; break
+            fi
+            echo "Waiting for MySQL... ($i)"; sleep 2
+          done
+
+      - name: Provision test database
+        # Creates nexgear_test (if missing) and imports the canonical schema
+        # from database/nexgear_store.sql.
+        run: php spark test:setup
+
+      - name: Run full PHPUnit suite
+        # Unit + Feature cover the whole codebase once. (UnitFast is a DB-free
+        # subset that overlaps Unit, so it's excluded here to avoid double runs.)
+        run: vendor/bin/phpunit --testsuite Unit,Feature --testdox
 
   deploy:
     name: Deploy to production VPS
