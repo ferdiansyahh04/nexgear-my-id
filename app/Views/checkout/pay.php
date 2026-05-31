@@ -44,34 +44,21 @@
     var hint = document.getElementById('payHint');
     if (!btn) return;
 
-    var csrfMeta = document.getElementById('csrf-token');
-    var csrfName = csrfMeta ? csrfMeta.getAttribute('name') : null;
-    var csrfHash = csrfMeta ? csrfMeta.getAttribute('content') : null;
-
     var orderId = btn.getAttribute('data-order-id');
     var ordersBase = '<?= base_url('/account/orders') ?>';
+    var invoiceUrl = '<?= base_url('/payment/invoice') ?>/' + orderId;
 
     btn.addEventListener('click', function () {
+        if (!window.NexGear || typeof window.NexGear.ajaxPost !== 'function') {
+            hint.textContent = 'Still loading… please wait a moment and try again.';
+            return;
+        }
         btn.disabled = true;
         hint.textContent = 'Preparing secure payment…';
 
-        var headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        if (csrfName && csrfHash) headers['X-CSRF-TOKEN'] = csrfHash;
-
-        var form = new FormData();
-        if (csrfName && csrfHash) form.append(csrfName, csrfHash);
-
-        fetch('<?= base_url('/payment/invoice') ?>/' + orderId, {
-            method: 'POST',
-            headers: headers,
-            body: form
-        })
-        .then(function (r) {
-            return r.text().then(function (text) {
-                try { return { ok: r.ok, data: JSON.parse(text) }; }
-                catch (e) { return { ok: false, data: { message: 'Unexpected server response (HTTP ' + r.status + ').' } }; }
-            });
-        })
+        // Reuse the app-wide CSRF-aware POST helper (sends X-CSRF-TOKEN and
+        // refreshes the rotating token from the JSON response).
+        window.NexGear.ajaxPost(invoiceUrl)
         .then(function (res) {
             var data = res.data || {};
             if (data.status === 'already_paid') {
@@ -79,7 +66,7 @@
                 return;
             }
             if (data.status !== 'success' || !data.reference) {
-                throw new Error(data.message || 'Could not start payment.');
+                throw new Error(data.message || ('Could not start payment (HTTP ' + (res.response ? res.response.status : '?') + ').'));
             }
             if (typeof checkout === 'undefined') {
                 throw new Error('Payment library failed to load. Please refresh and try again.');

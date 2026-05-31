@@ -25,12 +25,16 @@ class PaymentController extends BaseController
      */
     public function invoice(int $orderId)
     {
+        // Every JSON response carries the rotating CSRF token so the client's
+        // ajaxPost helper can refresh it (CSRF tokens regenerate per request).
+        $csrf = ['csrfName' => csrf_token(), 'csrfToken' => csrf_hash()];
+
         $duitku = new DuitkuService();
         if (! $duitku->isEnabled()) {
-            return $this->response->setStatusCode(503)->setJSON([
+            return $this->response->setStatusCode(503)->setJSON(array_merge($csrf, [
                 'status'  => 'error',
                 'message' => 'Online payment is not available right now.',
-            ]);
+            ]));
         }
 
         $orderModel = new CartModel();
@@ -38,12 +42,12 @@ class PaymentController extends BaseController
 
         // Ownership + state guards.
         if (! $order || (int) $order['user_id'] !== (int) session('user_id')) {
-            return $this->response->setStatusCode(404)->setJSON([
+            return $this->response->setStatusCode(404)->setJSON(array_merge($csrf, [
                 'status' => 'error', 'message' => 'Order not found.',
-            ]);
+            ]));
         }
         if (($order['payment_status'] ?? 'unpaid') === 'paid') {
-            return $this->response->setJSON(['status' => 'already_paid']);
+            return $this->response->setJSON(array_merge($csrf, ['status' => 'already_paid']));
         }
 
         // A fresh, unique merchantOrderId is required for each new invoice.
@@ -96,13 +100,13 @@ class PaymentController extends BaseController
             );
         } catch (\Throwable $e) {
             log_message('error', 'Duitku invoice creation failed: {msg}', ['msg' => $e->getMessage()]);
-            return $this->response->setStatusCode(502)->setJSON([
+            return $this->response->setStatusCode(502)->setJSON(array_merge($csrf, [
                 'status'  => 'error',
                 // Surface the gateway's own message (e.g. "Wrong Signature",
                 // "Amount is different") — these are operational, not secret,
                 // and make misconfiguration obvious to the operator.
                 'message' => 'Payment could not start: ' . $e->getMessage(),
-            ]);
+            ]));
         }
 
         $orderModel->update($orderId, [
@@ -111,11 +115,11 @@ class PaymentController extends BaseController
             'payment_status' => 'pending',
         ]);
 
-        return $this->response->setJSON([
+        return $this->response->setJSON(array_merge($csrf, [
             'status'     => 'success',
             'reference'  => $invoice['reference'],
             'paymentUrl' => $invoice['paymentUrl'],
-        ]);
+        ]));
     }
 
     /**
