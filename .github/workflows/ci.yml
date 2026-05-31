@@ -80,7 +80,11 @@ jobs:
             # Idempotent — CI4 tracks applied migrations, so re-running is a
             # no-op once everything is up to date. Required for schema changes
             # (e.g. the cart payment columns) to land before the app serves them.
-            sudo -u www-data php spark migrate --all || echo "WARN: migrate exited non-zero — continuing"
+            # -v prints each migration so failures are visible in the deploy log.
+            sudo -u www-data php spark migrate --all -v || echo "WARN: migrate exited non-zero — continuing"
+
+            echo '=== Migration status (for visibility) ==='
+            sudo -u www-data php spark migrate:status || true
 
             echo '=== Importing Noir Gear catalogue (keyboards & mice) ==='
             # Idempotent — upserts by name and skips already-downloaded images,
