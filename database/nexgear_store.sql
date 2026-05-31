@@ -4,6 +4,19 @@ CREATE DATABASE IF NOT EXISTS nexgear_store
 
 USE nexgear_store;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- This file is the COMPLETE, authoritative schema (all tables + columns up to
+-- and including the Duitku payment columns on `cart`). Importing it gives you
+-- the full current schema in one shot.
+--
+-- NOTE on migrations: after importing this dump you do NOT need to run
+-- `php spark migrate` — the schema is already current. The files in
+-- app/Database/Migrations/ are the incremental history; running them on top of
+-- a fresh import can error ("table already exists") because this dump does not
+-- populate CodeIgniter's `migrations` tracking table. For a fresh setup, import
+-- this SQL and stop. See README → "Setup Database".
+-- ─────────────────────────────────────────────────────────────────────────
+
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS search_logs;
 DROP TABLE IF EXISTS stock_alerts;
@@ -93,6 +106,11 @@ CREATE TABLE cart (
   total DECIMAL(12, 2) NOT NULL DEFAULT 0,
   coupon_code VARCHAR(60) NULL,
   discount DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+  payment_ref VARCHAR(64) NULL,
+  payment_token VARCHAR(100) NULL,
+  payment_method VARCHAR(50) NULL,
+  paid_at DATETIME NULL,
   shipping_name VARCHAR(120) NULL,
   shipping_phone VARCHAR(20) NULL,
   shipping_address VARCHAR(500) NULL,
@@ -105,7 +123,8 @@ CREATE TABLE cart (
     ON UPDATE CASCADE
     ON DELETE CASCADE,
   INDEX idx_cart_user_status_created (user_id, status, created_at),
-  INDEX idx_cart_status_created (status, created_at)
+  INDEX idx_cart_status_created (status, created_at),
+  INDEX idx_cart_payment_ref (payment_ref)
 ) ENGINE=InnoDB;
 
 -- ── Cart Items ──────────────────────────────────────────

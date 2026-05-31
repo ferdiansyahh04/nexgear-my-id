@@ -151,22 +151,27 @@ SMTP bersifat opsional. Biarkan blok email tetap dikomentari dan `MailerService`
 
 ### 4. Setup Database
 
-**Opsi A — Impor SQL kanonik (disarankan)**
+Impor SQL kanonik:
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE nexgear_store CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
 mysql -u root -p nexgear_store < database/nexgear_store.sql
 ```
 
-Ini membuat seluruh 17 tabel, index pencarian FULLTEXT pada produk, dan menyemai akun demo + kategori + produk + kupon.
+Ini membuat seluruh tabel **dengan skema lengkap terkini** (termasuk kolom
+pembayaran Duitku pada `cart`), index pencarian FULLTEXT pada produk, dan
+menyemai akun demo + kategori + produk + kupon. Setelah impor ini, skema sudah
+mutakhir — **Anda tidak perlu menjalankan `php spark migrate`**.
 
-**Opsi B — Migrasi (setelah impor SQL)**
-
-```bash
-php spark migrate
-```
-
-Berkas migrasi adalah pembaruan inkremental di atas skema kanonik, bukan pembangun skema dari kosong. Selalu impor SQL terlebih dahulu satu kali.
+> ⚠️ **Untuk setup baru: cukup impor SQL ini, lalu berhenti.** Jangan jalankan
+> `php spark migrate` di atas impor yang segar. Berkas di
+> `app/Database/Migrations/` adalah **patch inkremental yang mengasumsikan dump
+> ini sudah diimpor** (beberapa migrasi membuat tabel turunan dan menambah
+> foreign key yang mereferensikan `users`/`products`) — bukan pembangun skema
+> dari database kosong. Karena dump ini tidak mengisi tabel pelacakan
+> `migrations` milik CodeIgniter, menjalankan `migrate` setelah impor bisa error
+> ("table already exists"). Migrasi hanya relevan untuk **menerapkan perubahan
+> skema baru** pada database yang sudah ada.
 
 Verifikasi akun seed ter-hash dengan benar:
 
