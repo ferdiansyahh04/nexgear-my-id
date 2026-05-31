@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\AdminFilter;
 use App\Filters\AuthFilter;
+use App\Filters\SecurityHeadersFilter;
 use App\Filters\StaffOrAdminFilter;
 use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\BaseConfig;
@@ -15,14 +16,15 @@ use CodeIgniter\Filters\SecureHeaders;
 class Filters extends BaseConfig
 {
     public array $aliases = [
-        'csrf'          => CSRF::class,
-        'honeypot'      => Honeypot::class,
-        'invalidchars'  => InvalidChars::class,
-        'secureheaders' => SecureHeaders::class,
-        'auth'          => AuthFilter::class,
-        'admin'         => AdminFilter::class,
-        'staff'         => StaffOrAdminFilter::class,
-        'throttle'      => ThrottleFilter::class,
+        'csrf'            => CSRF::class,
+        'honeypot'        => Honeypot::class,
+        'invalidchars'    => InvalidChars::class,
+        'secureheaders'   => SecureHeaders::class,
+        'securityheaders' => SecurityHeadersFilter::class,
+        'auth'            => AuthFilter::class,
+        'admin'           => AdminFilter::class,
+        'staff'           => StaffOrAdminFilter::class,
+        'throttle'        => ThrottleFilter::class,
     ];
 
     public array $globals = [
@@ -32,6 +34,7 @@ class Filters extends BaseConfig
         ],
         'after' => [
             'secureheaders',
+            'securityheaders',
         ],
     ];
 
@@ -54,7 +57,7 @@ class Filters extends BaseConfig
             ));
             $this->globals['after'] = array_values(array_diff(
                 $this->globals['after'],
-                ['secureheaders']
+                ['secureheaders', 'securityheaders']
             ));
         }
     }
