@@ -7,17 +7,17 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Hardens response headers, complementing CodeIgniter's built-in
- * `secureheaders` filter and the CSP machinery:
+ * Adds HSTS (Strict-Transport-Security) to responses served over HTTPS.
  *
- *   1. Adds HSTS (Strict-Transport-Security). The stock SecureHeaders filter
- *      does NOT emit HSTS, and the Apache rule only fires when env=HTTPS — which
- *      is unreliable behind a TLS-terminating proxy (Cloudflare). We detect a
- *      secure request directly (incl. X-Forwarded-Proto) and set it ourselves.
+ * CodeIgniter's built-in `secureheaders` filter does NOT emit HSTS, and the
+ * Apache rule is gated on env=HTTPS which is unreliable behind a
+ * TLS-terminating proxy (Cloudflare forwards plain HTTP to the origin). We
+ * detect a secure request directly — including the proxy's X-Forwarded-Proto /
+ * CF-Visitor signals — and set the header ourselves.
  *
- *   2. Removes the empty `Content-Security-Policy-Report-Only` header that CI4
- *      always initialises but never fills when report-only mode is off, so it
- *      doesn't ship as a stray empty header.
+ * (The empty `Content-Security-Policy-Report-Only` header that CI4 emits is
+ * stripped at the web-server layer in public/.htaccess, because CI4's CSP
+ * finalize() runs at send() time — after this filter — and would re-add it.)
  *
  * Registered as a global `after` filter in Config\Filters.
  */
@@ -30,24 +30,11 @@ class SecurityHeadersFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // ── 1. HSTS over HTTPS (direct or proxied) ──────────────────────
         if ($this->isSecure($request)) {
             $response->setHeader(
                 'Strict-Transport-Security',
                 'max-age=31536000; includeSubDomains'
             );
-        }
-
-        // ── 2. Drop the empty report-only CSP header (CI4 artifact) ─────
-        $reportOnly = $response->getHeaderLine('Content-Security-Policy-Report-Only');
-        if (trim($reportOnly) === '') {
-            $response->removeHeader('Content-Security-Policy-Report-Only');
-        }
-
-        // Drop the matching empty Reporting-Endpoints header if present.
-        $reportingEndpoints = $response->getHeaderLine('Reporting-Endpoints');
-        if (trim($reportingEndpoints) === '') {
-            $response->removeHeader('Reporting-Endpoints');
         }
     }
 

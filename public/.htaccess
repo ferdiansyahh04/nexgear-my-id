@@ -45,6 +45,15 @@ Options -Indexes
     # Comment out the line below if you don't yet serve every subdomain over TLS.
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 
+    # CodeIgniter's CSP finalize() always initialises these two headers and
+    # ships them EMPTY when report-only mode is off (it only appends to them
+    # when there are report-only directives, which we never set). finalize()
+    # runs at send() time — after PHP filters — so they can't be removed in an
+    # "after" filter. Strip them here at the web-server layer instead. We do not
+    # use report-only mode, so unsetting them outright is correct.
+    Header always unset Content-Security-Policy-Report-Only
+    Header always unset Reporting-Endpoints
+
     # Versioned static assets (asset_url() helper appends ?v=<hash>) can be
     # cached aggressively — the URL changes whenever the file changes, so
     # there's no risk of staleness.
