@@ -33,11 +33,28 @@ class DuitkuServiceTest extends CIUnitTestCase
         $this->assertStringContainsString('sandbox', $this->service()->popJsUrl());
     }
 
-    public function testVerifyCallbackAcceptsValid(): void
+    public function testVerifyCallbackAcceptsValidMd5(): void
     {
         $svc      = $this->service();
         $amount   = '329000';
         $orderId  = 'NEXGEAR-7-1700000000';
+        // Legacy MD5 scheme used by the official duitku-php SDK.
+        $sig      = md5('DS0001' . $amount . $orderId . 'UNIT-TEST-API-KEY');
+
+        $this->assertTrue($svc->verifyCallback([
+            'merchantCode'    => 'DS0001',
+            'amount'          => $amount,
+            'merchantOrderId' => $orderId,
+            'signature'       => $sig,
+        ]));
+    }
+
+    public function testVerifyCallbackAcceptsValidHmac(): void
+    {
+        $svc      = $this->service();
+        $amount   = '329000';
+        $orderId  = 'NEXGEAR-7-1700000000';
+        // Newer HMAC-SHA256 scheme.
         $sig      = hash_hmac('sha256', 'DS0001' . $amount . $orderId, 'UNIT-TEST-API-KEY');
 
         $this->assertTrue($svc->verifyCallback([

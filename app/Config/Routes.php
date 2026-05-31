@@ -93,11 +93,11 @@ $routes->group('checkout', ['filter' => 'auth'], static function ($routes) {
     $routes->get('pay/(:num)', 'CheckoutController::pay/$1');
 });
 
-// ── Payments (Duitku Pop) ────────────────────────────────────────────────
-// invoice creation requires an authenticated owner; the return is cosmetic.
+// ── Payments (Duitku hosted redirect) ────────────────────────────────────
+// start creates the invoice and redirects to Duitku's payment page (auth).
 // The callback is server-to-server (no CSRF, no auth) and is authenticated
 // instead via the HMAC-SHA256 signature it carries.
-$routes->post('payment/invoice/(:num)', 'PaymentController::invoice/$1', ['filter' => 'auth']);
+$routes->post('payment/start/(:num)', 'PaymentController::start/$1', ['filter' => 'auth']);
 $routes->post('payment/callback', 'PaymentController::callback');
 $routes->get('payment/return', 'PaymentController::return', ['filter' => 'auth']);
 

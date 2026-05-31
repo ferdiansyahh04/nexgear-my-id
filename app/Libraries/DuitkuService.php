@@ -60,7 +60,11 @@ class DuitkuService
 
         // UNIX timestamp in milliseconds (Jakarta time, but epoch ms is TZ-agnostic).
         $timestamp = (string) (int) round(microtime(true) * 1000);
-        $signature = hash_hmac('sha256', $this->config->merchantCode . $timestamp, $this->config->apiKey);
+        // Signature per the official duitku-php library (Pop::createInvoice):
+        // sha256(merchantCode + timestamp + apiKey). Duitku's newer HMAC scheme
+        // is documented but the SHA256 concat form is what the reference SDK
+        // sends and remains accepted.
+        $signature = hash('sha256', $this->config->merchantCode . $timestamp . $this->config->apiKey);
 
         $payload = [
             'paymentAmount'   => (int) $order['paymentAmount'],
@@ -91,7 +95,11 @@ class DuitkuService
     /**
      * Verify the signature on a Duitku callback (x-www-form-urlencoded POST).
      *
-     * Duitku computes: HMAC_SHA256(merchantCode + amount + merchantOrderId, apiKey).
+     * The official duitku-php library computes:
+     *   md5(merchantCode + amount + merchantOrderId + apiKey)
+     * Duitku also documents a newer HMAC-SHA256 scheme. We accept either so the
+     * integration keeps working regardless of which the account is configured
+     * to send.
      *
      * @param array<string, mixed> $body
      */
@@ -111,9 +119,18 @@ class DuitkuService
             return false;
         }
 
-        $expected = hash_hmac('sha256', $merchantCode . $amount . $merchantOrderId, $this->config->apiKey);
+        $stringToSign = $merchantCode . $amount . $merchantOrderId;
 
-        return hash_equals($expected, $signature);
+        // Legacy MD5 (what the reference SDK validates against).
+        $md5 = md5($stringToSign . $this->config->apiKey);
+        if (hash_equals($md5, $signature)) {
+            return true;
+        }
+
+        // Newer HMAC-SHA256 scheme.
+        $hmac = hash_hmac('sha256', $stringToSign, $this->config->apiKey);
+
+        return hash_equals($hmac, $signature);
     }
 
     /**

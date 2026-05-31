@@ -8,11 +8,16 @@ use App\Models\CartModel;
 use App\Models\ProductModel;
 
 /**
- * Duitku Pop payment flow.
+ * Duitku payment flow (hosted redirect).
  *
- *   POST /payment/invoice/(:num) — (auth) create/return a Duitku reference for an order
- *   POST /payment/callback       — Duitku server-to-server callback (no CSRF)
- *   GET  /payment/return         — browser redirect target after Pop closes
+ *   POST /payment/start/(:num) — (auth) create a Duitku invoice and redirect
+ *                                the customer to Duitku's hosted payment page
+ *   POST /payment/callback     — Duitku server-to-server callback (no CSRF)
+ *   GET  /payment/return       — browser redirect target after payment
+ *
+ * We use Duitku's "window redirection" (the paymentUrl from createInvoice)
+ * rather than the duitku.js popup — it shows every payment method on Duitku's
+ * own page and avoids the JS library / CSP-iframe complexity entirely.
  *
  * The callback is the source of truth for marking an order paid; the browser
  * return is cosmetic (the user can close the tab before it fires).
@@ -20,85 +25,56 @@ use App\Models\ProductModel;
 class PaymentController extends BaseController
 {
     /**
-     * Create (or refresh) a Duitku invoice for an order the current user owns.
-     * Returns JSON { reference } for the front-end checkout.process() call.
+     * Create a Duitku invoice for an order the current user owns, then send
+     * the browser to Duitku's hosted payment page. On any failure we bounce
+     * back to the pay page with a clear flash error (no opaque 500s).
      */
-    public function invoice(int $orderId)
+    public function start(int $orderId)
     {
-        // Every JSON response carries the rotating CSRF token so the client's
-        // ajaxPost helper can refresh it (CSRF tokens regenerate per request).
-        $csrf = ['csrfName' => csrf_token(), 'csrfToken' => csrf_hash()];
-
         try {
-            return $this->createInvoice($orderId, $csrf);
-        } catch (\Throwable $e) {
-            // Anything unexpected (DB schema drift, etc.) becomes a clear JSON
-            // error instead of a bare HTTP 500 the front-end can't read.
-            log_message('error', 'Payment invoice failed: {msg}', ['msg' => $e->getMessage()]);
-            return $this->response->setStatusCode(500)->setJSON(array_merge($csrf, [
-                'status'  => 'error',
-                'message' => 'Payment could not start: ' . $e->getMessage(),
-            ]));
-        }
-    }
+            $duitku = new DuitkuService();
+            if (! $duitku->isEnabled()) {
+                return redirect()->to('/account/orders/' . $orderId)
+                    ->with('error', 'Online payment is not available right now.');
+            }
 
-    /**
-     * @param array{csrfName:string, csrfToken:string} $csrf
-     */
-    private function createInvoice(int $orderId, array $csrf)
-    {
-        $duitku = new DuitkuService();
-        if (! $duitku->isEnabled()) {
-            return $this->response->setStatusCode(503)->setJSON(array_merge($csrf, [
-                'status'  => 'error',
-                'message' => 'Online payment is not available right now.',
-            ]));
-        }
+            $orderModel = new CartModel();
+            $order      = $orderModel->find($orderId);
 
-        $orderModel = new CartModel();
-        $order      = $orderModel->find($orderId);
+            if (! $order || (int) $order['user_id'] !== (int) session('user_id')) {
+                return redirect()->to('/account/orders')->with('error', 'Order not found.');
+            }
+            if (($order['payment_status'] ?? 'unpaid') === 'paid') {
+                return redirect()->to('/account/orders/' . $orderId)->with('success', 'This order is already paid.');
+            }
 
-        // Ownership + state guards.
-        if (! $order || (int) $order['user_id'] !== (int) session('user_id')) {
-            return $this->response->setStatusCode(404)->setJSON(array_merge($csrf, [
-                'status' => 'error', 'message' => 'Order not found.',
-            ]));
-        }
-        if (($order['payment_status'] ?? 'unpaid') === 'paid') {
-            return $this->response->setJSON(array_merge($csrf, ['status' => 'already_paid']));
-        }
+            // Fresh, unique merchantOrderId per attempt so retries never collide.
+            $merchantOrderId = 'NEXGEAR-' . $orderId . '-' . time();
 
-        // A fresh, unique merchantOrderId is required for each new invoice.
-        // We namespace by cart id + timestamp so retries never collide, and
-        // store it on the order so the callback can find us.
-        $merchantOrderId = 'NEXGEAR-' . $orderId . '-' . time();
+            $items        = (new CartItemModel())->where('cart_id', $orderId)->findAll();
+            $productModel = new ProductModel();
+            $itemDetails  = [];
+            foreach ($items as $line) {
+                $product = $productModel->find((int) $line['product_id']);
+                $itemDetails[] = [
+                    'name'     => mb_substr((string) ($product['name'] ?? 'Item'), 0, 50),
+                    'price'    => (int) round((float) $line['price']),
+                    'quantity' => (int) $line['quantity'],
+                ];
+            }
 
-        $items        = (new CartItemModel())->where('cart_id', $orderId)->findAll();
-        $productModel = new ProductModel();
-        $itemDetails  = [];
-        foreach ($items as $line) {
-            $product = $productModel->find((int) $line['product_id']);
-            $itemDetails[] = [
-                'name'     => mb_substr((string) ($product['name'] ?? 'Item'), 0, 50),
-                'price'    => (int) round((float) $line['price']),
-                'quantity' => (int) $line['quantity'],
-            ];
-        }
+            // Coupon discount as a negative line so item totals == paymentAmount.
+            $discount = (int) round((float) ($order['discount'] ?? 0));
+            if ($discount > 0) {
+                $itemDetails[] = [
+                    'name'     => mb_substr('Discount' . ($order['coupon_code'] ? ' (' . $order['coupon_code'] . ')' : ''), 0, 50),
+                    'price'    => -$discount,
+                    'quantity' => 1,
+                ];
+            }
 
-        // Represent the coupon discount as a negative line so the item totals
-        // reconcile with paymentAmount (Duitku requires the sum to match).
-        $discount = (int) round((float) ($order['discount'] ?? 0));
-        if ($discount > 0) {
-            $itemDetails[] = [
-                'name'     => mb_substr('Discount' . ($order['coupon_code'] ? ' (' . $order['coupon_code'] . ')' : ''), 0, 50),
-                'price'    => -$discount,
-                'quantity' => 1,
-            ];
-        }
+            $paymentAmount = (int) round((float) $order['total']);
 
-        $paymentAmount = (int) round((float) $order['total']);
-
-        try {
             $invoice = $duitku->createInvoice(
                 [
                     'merchantOrderId' => $merchantOrderId,
@@ -116,37 +92,29 @@ class PaymentController extends BaseController
                     'returnUrl'   => base_url('/payment/return?order=' . $orderId),
                 ]
             );
+
+            if (empty($invoice['paymentUrl'])) {
+                return redirect()->to('/account/orders/' . $orderId)
+                    ->with('error', 'Payment could not start: no payment URL returned.');
+            }
+
+            // Persist the gateway reference; tolerate the pre-rename column.
+            $update = ['payment_ref' => $merchantOrderId, 'payment_status' => 'pending'];
+            $cols   = db_connect()->getFieldNames('cart');
+            if (in_array('payment_token', $cols, true)) {
+                $update['payment_token'] = $invoice['reference'];
+            } elseif (in_array('snap_token', $cols, true)) {
+                $update['snap_token'] = $invoice['reference'];
+            }
+            $orderModel->update($orderId, $update);
+
+            // Off to Duitku's hosted payment page.
+            return redirect()->to($invoice['paymentUrl']);
         } catch (\Throwable $e) {
-            log_message('error', 'Duitku invoice creation failed: {msg}', ['msg' => $e->getMessage()]);
-            return $this->response->setStatusCode(502)->setJSON(array_merge($csrf, [
-                'status'  => 'error',
-                // Surface the gateway's own message (e.g. "Wrong Signature",
-                // "Amount is different") — these are operational, not secret,
-                // and make misconfiguration obvious to the operator.
-                'message' => 'Payment could not start: ' . $e->getMessage(),
-            ]));
+            log_message('error', 'Payment start failed: {msg}', ['msg' => $e->getMessage()]);
+            return redirect()->to('/account/orders/' . $orderId)
+                ->with('error', 'Payment could not start: ' . $e->getMessage());
         }
-
-        // Persist the gateway reference. The token column was renamed
-        // snap_token → payment_token; tolerate whichever the live schema has
-        // so a not-yet-run migration can't 500 the payment.
-        $update = [
-            'payment_ref'    => $merchantOrderId,
-            'payment_status' => 'pending',
-        ];
-        $cols = db_connect()->getFieldNames('cart');
-        if (in_array('payment_token', $cols, true)) {
-            $update['payment_token'] = $invoice['reference'];
-        } elseif (in_array('snap_token', $cols, true)) {
-            $update['snap_token'] = $invoice['reference'];
-        }
-        $orderModel->update($orderId, $update);
-
-        return $this->response->setJSON(array_merge($csrf, [
-            'status'     => 'success',
-            'reference'  => $invoice['reference'],
-            'paymentUrl' => $invoice['paymentUrl'],
-        ]));
     }
 
     /**
@@ -194,7 +162,7 @@ class PaymentController extends BaseController
     }
 
     /**
-     * Browser redirect after the Pop closes / the user returns. The callback
+     * Browser redirect after the customer returns from Duitku. The callback
      * does the real state change; here we just route the user to their order.
      */
     public function return()

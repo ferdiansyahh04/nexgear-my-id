@@ -22,74 +22,21 @@
             <p class="text-muted font-serif italic mb-0">Secure payment powered by Duitku.</p>
         </div>
 
-        <button type="button" id="payNowBtn"
-                class="btn btn-dark w-100 py-3 rounded-0 text-uppercase fw-bold d-flex justify-content-between px-4"
-                data-order-id="<?= (int) $order['id'] ?>"
-                style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; font-size: 0.85rem;">
-            <span><i class="bi bi-credit-card me-2"></i>Pay Now</span>
-            <span>→</span>
-        </button>
+        <!-- Plain form POST → server creates the invoice and redirects to
+             Duitku's hosted payment page. No JS/popup needed. -->
+        <form action="<?= base_url('/payment/start/' . (int) $order['id']) ?>" method="post" class="m-0">
+            <?= csrf_field() ?>
+            <button type="submit"
+                    class="btn btn-dark w-100 py-3 rounded-0 text-uppercase fw-bold d-flex justify-content-between px-4"
+                    style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; font-size: 0.85rem;">
+                <span><i class="bi bi-credit-card me-2"></i>Pay Now</span>
+                <span>→</span>
+            </button>
+        </form>
 
-        <p class="text-center text-muted small mt-4 mb-0 font-serif italic" id="payHint">
+        <p class="text-center text-muted small mt-4 mb-0 font-serif italic">
             <i class="bi bi-lock-fill me-1"></i> Pay with bank transfer, e-wallet, QRIS, retail, or card.
         </p>
     </div>
 </section>
-
-<!-- Duitku Pop loader -->
-<script src="<?= esc($popJsUrl, 'attr') ?>"></script>
-<script {csp-script-nonce}>
-(function () {
-    var btn = document.getElementById('payNowBtn');
-    var hint = document.getElementById('payHint');
-    if (!btn) return;
-
-    var orderId = btn.getAttribute('data-order-id');
-    var ordersBase = '<?= base_url('/account/orders') ?>';
-    var invoiceUrl = '<?= base_url('/payment/invoice') ?>/' + orderId;
-
-    btn.addEventListener('click', function () {
-        if (!window.NexGear || typeof window.NexGear.ajaxPost !== 'function') {
-            hint.textContent = 'Still loading… please wait a moment and try again.';
-            return;
-        }
-        btn.disabled = true;
-        hint.textContent = 'Preparing secure payment…';
-
-        // Reuse the app-wide CSRF-aware POST helper (sends X-CSRF-TOKEN and
-        // refreshes the rotating token from the JSON response).
-        window.NexGear.ajaxPost(invoiceUrl)
-        .then(function (res) {
-            var data = res.data || {};
-            if (data.status === 'already_paid') {
-                window.location.href = ordersBase + '/' + orderId;
-                return;
-            }
-            if (data.status !== 'success' || !data.reference) {
-                throw new Error(data.message || ('Could not start payment (HTTP ' + (res.response ? res.response.status : '?') + ').'));
-            }
-            if (typeof checkout === 'undefined') {
-                throw new Error('Payment library failed to load. Please refresh and try again.');
-            }
-            checkout.process(data.reference, {
-                defaultLanguage: 'id',
-                successEvent: function () { window.location.href = ordersBase + '/' + orderId; },
-                pendingEvent: function () { window.location.href = ordersBase + '/' + orderId; },
-                errorEvent:   function () {
-                    btn.disabled = false;
-                    hint.textContent = 'Payment error. Please try again or use another method.';
-                },
-                closeEvent:   function () {
-                    btn.disabled = false;
-                    hint.textContent = 'Payment window closed. You can try again anytime.';
-                }
-            });
-        })
-        .catch(function (err) {
-            btn.disabled = false;
-            hint.textContent = err.message || 'Something went wrong. Please try again.';
-        });
-    });
-})();
-</script>
 <?= $this->endSection() ?>

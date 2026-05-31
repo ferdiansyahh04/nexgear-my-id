@@ -193,9 +193,8 @@ class CheckoutController extends BaseController
         }
 
         return view('checkout/pay', [
-            'title'    => 'Complete Payment',
-            'order'    => $order,
-            'popJsUrl' => $duitku->popJsUrl(),
+            'title' => 'Complete Payment',
+            'order' => $order,
         ]);
     }
 }
